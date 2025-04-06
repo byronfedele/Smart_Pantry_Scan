@@ -1,130 +1,197 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { StyleSheet, View, Text, Button, TextInput, Image, ActivityIndicator } from 'react-native';
+import { Camera, useCameraDevices, CameraDevice, Code, CodeScannerFrame } from 'react-native-vision-camera';
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
-
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
-
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
+interface ProductData {
+  status: number;
+  product_name?: string;
+  quantity?: string;
+  image_front_url?: string;
 }
 
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+const App = () => {
+  const [hasPermission, setHasPermission] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
+  const [barcode, setBarcode] = useState<string | null>(null);
+  const [productData, setProductData] = useState<ProductData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const camera = useRef<Camera>(null);
+  const devices = useCameraDevices();
+  const device: CameraDevice | undefined = devices.find(d => d.position === 'back');
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  useEffect(() => {
+    (async () => {
+      const status = await Camera.requestCameraPermission();
+      setHasPermission(status === 'granted');
+    })();
+  }, []);
+
+  const handleScanButtonPress = useCallback(() => {
+    setIsScanning(true);
+    setBarcode(null);
+    setProductData(null);
+    setError(null);
+  }, []);
+
+  const handleBarcodeScanned = useCallback(async (codes: Code[], frame: CodeScannerFrame) => {
+    if (isScanning && codes.length > 0) {
+      const scannedBarcode = codes[0];
+      if (scannedBarcode?.value) {
+        setIsScanning(false);
+        setBarcode(scannedBarcode.value);
+        setLoading(true);
+        setError(null);
+        console.log(scannedBarcode.value);
+
+        const apiUrl = `https://world.openfoodfacts.net/api/v2/product/${scannedBarcode.value}?fields=status,product_name,quantity,image_front_url`;
+
+        try {
+        
+          const response = await fetch(apiUrl);
+          console.log('API Response:', response); // Log the response object
+          const data = await response.json();
+          console.log('API Response Data:', data);
+          console.log('API Status:', data.status);
+
+          if (data.status === 1) {
+            setProductData(data);
+          } else {
+            setError(`Product with barcode ${scannedBarcode.value} not found. Status: ${data.status}`);
+            setProductData(null);
+          }
+        } catch (e: any) {
+
+          console.error('Fetch Error:', e); // Log the entire error object
+          console.error('Fetch Error Message:', e.message); // Log the error message
+          console.error('Fetch Error Stack:', e.stack); // Log the error stack trace
+          setError(`Uh-oh Failed to fetch product information for barcode: ${scannedBarcode.value}`);
+          setProductData(null);
+        } finally {
+          setLoading(false);
+        }
+      }
+    }
+  }, [isScanning]);
+
+  const renderHomeScreen = () => (
+    <View style={styles.container}>
+      <Text style={styles.title}>Open Food Facts Scanner</Text>
+      <Button title="Scan Barcode" onPress={handleScanButtonPress} />
+
+      {loading && <ActivityIndicator size="large" style={styles.loadingIndicator} />}
+
+      {error && <Text style={styles.errorText}>{error}</Text>}
+      {productData && console.log('Current productData Name:', productData.product.product_name)}
+
+      {productData && productData.product.product_name && (
+        <View style={styles.productInfo}>
+          <Text style={styles.productName}>{productData.product.product_name}</Text>
+          {productData.product.quantity && <Text>Quantity: {productData.product.quantity}</Text>}
+          {productData.product.image_front_url && (
+            <Image source={{ uri: productData.product.image_front_url }} style={styles.productImage} resizeMode="contain" />
+          )}
+        </View>
+      )}
+    </View>
+  );
+
+  const renderScanner = () => {
+    if (!device) {
+      return (
+        <View style={styles.scannerContainer}>
+          <Text>No back camera available</Text>
+          <Button title="Go Back" onPress={() => setIsScanning(false)} />
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.scannerContainer}>
+        <Camera
+          ref={camera}
+          style={StyleSheet.absoluteFill}
+          device={device}
+          isActive={isScanning}
+          codeScanner={{
+            onCodeScanned: handleBarcodeScanned,
+            codeTypes: [
+              'qr',
+              'ean-13',
+              'code-128',
+              'upc-a',
+              'ean-8',
+              'upc-e',
+              'code-39',
+              'itf',
+              'codabar',
+            ],
+          }}
+        />
+        <Button title="Cancel Scan" onPress={() => setIsScanning(false)} style={styles.cancelButton} />
+      </View>
+    );
   };
 
-  /*
-   * To keep the template simple and small we're adding padding to prevent view
-   * from rendering under the System UI.
-   * For bigger apps the reccomendation is to use `react-native-safe-area-context`:
-   * https://github.com/AppAndFlow/react-native-safe-area-context
-   *
-   * You can read more about it here:
-   * https://github.com/react-native-community/discussions-and-proposals/discussions/827
-   */
-  const safePadding = '5%';
+  if (!hasPermission) {
+    return (
+      <View style={styles.container}>
+        <Text>Camera permission not granted</Text>
+      </View>
+    );
+  }
 
   return (
-    <View style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        style={backgroundStyle}>
-        <View style={{paddingRight: safePadding}}>
-          <Header/>
-        </View>
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-            paddingHorizontal: safePadding,
-            paddingBottom: safePadding,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
+    <View style={{ flex: 1 }}>
+      {isScanning ? renderScanner() : renderHomeScreen()}
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
   },
-  sectionTitle: {
+  title: {
     fontSize: 24,
-    fontWeight: '600',
+    fontWeight: 'bold',
+    marginBottom: 20,
   },
-  sectionDescription: {
-    marginTop: 8,
+  loadingIndicator: {
+    marginTop: 20,
+  },
+  errorText: {
+    marginTop: 20,
+    color: 'red',
+  },
+  productInfo: {
+    marginTop: 30,
+    alignItems: 'center',
+  },
+  productName: {
     fontSize: 18,
-    fontWeight: '400',
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
   },
-  highlight: {
-    fontWeight: '700',
+  productImage: {
+    width: 200,
+    height: 200,
+    resizeMode: 'contain',
+    marginBottom: 10,
+  },
+  scannerContainer: {
+    flex: 1,
+    position: 'relative',
+  },
+  cancelButton: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
   },
 });
 
