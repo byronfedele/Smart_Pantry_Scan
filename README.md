@@ -1,97 +1,82 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Smart Pantry Scan
 
-# Getting Started
+A mobile application for scanning food barcodes and managing your home pantry inventory. Built with React Native, this app aims to simplify tracking the food items you have on hand, helping you reduce waste and stay organized.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## Current Status
 
-## Step 1: Start Metro
+This project is currently in the early stages of development. The core functionality implemented so far includes:
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+* **Barcode Scanning:** Users can use their device's camera to scan food product barcodes.
+* **Open Food Facts Integration:** Upon scanning, the app queries the Open Food Facts API to retrieve product information (name, image, etc.).
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+<del>* **Basic Inventory Management (Local):**
+    * Users can add scanned products to their personal inventory.
+    * The app stores basic information about each inventory item locally on the device using SQLite. This includes:
+        * Product Name
+        * Quantity in Possession
+        * Storage Location (user-defined)
+        * Expiration Date (user-input)
+        * User Notes
+        * Scan Timestamp
+    * Users can (in future iterations) view, update, and delete items from their local inventory.
+</del>
+## Planned Features
 
-```sh
-# Using npm
-npm start
+Future development will focus on:
 
-# OR using Yarn
-yarn start
-```
+* **User Interface (UI) and User Experience (UX) Improvements:** Enhancing the visual design and making the app more intuitive to use.
+* **Advanced Inventory Management:**
+    * Filtering and sorting inventory items (e.g., by location, expiration date).
+    * Setting reminders for expiring items.
+    * Potentially tracking purchase dates.
+* **User Accounts and Data Synchronization (Long-Term):** Implementing user registration and login to allow users to sync their inventory across multiple devices using a backend API and a central database.
+* **Product Details Caching:** Storing frequently accessed product information locally to reduce API calls.
+* **Potential Future Features:** Exploring ideas like recipe suggestions based on inventory, community sharing of product information, and more.
 
-## Step 2: Build and run your app
+## Technologies Used
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+* **React Native:** A framework for building native mobile apps using JavaScript and React.
+* **TypeScript:** A superset of JavaScript that adds static typing.
+* **Expo Camera:** A library for accessing the device's camera for barcode scanning.
+* **Open Food Facts API:** A free and open database of food products.
+* **react-native-sqlite-storage:** A library for local data storage using SQLite.
+* **Git:** Version control system for tracking changes.
+* **GitHub:** Platform for hosting the Git repository.
 
-### Android
+## Getting Started (For Developers)
 
-```sh
-# Using npm
-npm run android
+1.  **Clone the repository:**
+    ```bash
+    git clone [https://github.com/byronfedele/Smart_Pantry_Scan.git](https://www.google.com/search?q=https://github.com/byronfedele/Smart_Pantry_Scan.git)
+    cd Smart_Pantry_Scan
+    ```
 
-# OR using Yarn
-yarn android
-```
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    # or
+    yarn install
+    ```
 
-### iOS
+3.  **Set up your development environment:** Ensure you have Node.js, npm or Yarn, and the React Native CLI installed. For running on iOS, you'll need Xcode; for Android, you'll need Android Studio.
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+4.  **Run the application:**
+    ```bash
+    npx react-native run-ios  # For iOS
+    npx react-native run-android # For Android
+    # or
+    yarn ios
+    yarn android
+    ```
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+## Contributing
 
-```sh
-bundle install
-```
+Contributions are welcome! If you have ideas for new features, bug fixes, or improvements, please feel free to open an issue or submit a pull request.
 
-Then, and every time you update your native dependencies, run:
+## License
 
-```sh
-bundle exec pod install
-```
+This project is licensed under the [MIT License](LICENSE). See the `LICENSE` file for more information.
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+---
 
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
-```
-
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
-
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
-
-## Step 3: Modify your app
-
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+**Note:** This README reflects the current state of the project as of April 7, 2025. The "Planned Features" section outlines the general direction and may evolve over time.
