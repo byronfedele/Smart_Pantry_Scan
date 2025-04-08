@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { StyleSheet, View, Text, Button, TextInput, Image, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Text, Button, TextInput, Image, ActivityIndicator, Alert } from 'react-native';
 import { Camera, useCameraDevices, CameraDevice, Code, CodeScannerFrame } from 'react-native-vision-camera';
-
+import AddLocationButton from './src/components/AddLocationButton'; // Adjust path if needed
+import { openDatabase } from './src/database/databaseService'; // Adjust path if needed
+import AppNavigator from './src/navigation/AppNavigator';
+import { useNavigation } from '@react-navigation/native';
 interface ProductData {
   status: number;
   product_name?: string;
@@ -10,6 +13,9 @@ interface ProductData {
 }
 
 const App = () => {
+  const navigation = useNavigation();
+  return <AppNavigator />;
+
   const [hasPermission, setHasPermission] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [barcode, setBarcode] = useState<string | null>(null);
@@ -24,6 +30,17 @@ const App = () => {
     (async () => {
       const status = await Camera.requestCameraPermission();
       setHasPermission(status === 'granted');
+
+      try {
+        await openDatabase();
+        console.log('Database initialized successfully in App.tsx');
+        // You can now proceed with other database operations later in the component
+      } catch (dbError) {
+        console.error('Failed to initialize database:', dbError);
+        setError('Failed to initialize local database.');
+      }
+
+      
     })();
   }, []);
 
@@ -78,7 +95,17 @@ const App = () => {
     <View style={styles.container}>
       <Text style={styles.title}>Open Food Facts Scanner</Text>
       <Button title="Scan Barcode" onPress={handleScanButtonPress} />
+      <View style={styles.locationButtonContainer}>
+        <AddLocationButton />
+        <Button
+          title="View Locations"
+          onPress={() => navigation.navigate('Locations')}
+        />
+      </View>
 
+      {/* <View style={styles.locationButtonContainer}>
+        <AddLocationButton />
+      </View> */}
       {loading && <ActivityIndicator size="large" style={styles.loadingIndicator} />}
 
       {error && <Text style={styles.errorText}>{error}</Text>}
@@ -192,6 +219,9 @@ const styles = StyleSheet.create({
     bottom: 20,
     left: 20,
     right: 20,
+  },
+  locationButtonContainer: {
+    marginTop: 20, // Add some spacing above the button
   },
 });
 
