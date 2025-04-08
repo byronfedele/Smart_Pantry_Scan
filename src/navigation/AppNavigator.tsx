@@ -2,10 +2,11 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import HomeScreen from '../../App'; // Assuming your current App.tsx is your HomeScreen
-import LocationsScreen from '../screens/LocationsScreen'; // We'll create this next
+import HomeScreen from '../screens/HomeScreen';
+import LocationsScreen from '../screens/LocationsScreen';
+import { RootStackParamList } from './navigationTypes';
 
-const Stack = createStackNavigator();
+const Stack = createStackNavigator<RootStackParamList>();
 
 const AppNavigator = () => {
   return (
