@@ -49,15 +49,6 @@ const createTables = async (db: SQLite.SQLiteDatabase): Promise<void> => { // Re
     console.error('Error creating tables:', error);
     throw error;
   }
-
-  try {
-    await db.executeSql('INSERT INTO UserLocations (location_name) VALUES (?)', ['Debug Location 1']);
-    await db.executeSql('INSERT INTO UserLocations (location_name) VALUES (?)', ['Debug Location 2']);
-    console.log('Debug data inserted into UserLocations');
-  } catch (error) {
-    console.error('Error inserting debug data:', error);
-    throw error;
-  }
 };
 
 const addLocation = async (locationName: string): Promise<void> => {
@@ -107,4 +98,17 @@ const getLocations = async (): Promise<Array<{ location_id: number; location_nam
   }
 };
 
-export { openDatabase, addLocation, getLocations };
+const deleteLocation = async (locationId: number): Promise<void> => {
+  if (!db) {
+    throw new Error('Database not initialized');
+  }
+  try {
+    await db.executeSql('DELETE FROM UserLocations WHERE location_id = ?', [locationId]);
+    console.log(`Location with ID ${locationId} deleted successfully`);
+  } catch (error) {
+    console.error(`Error deleting location with ID ${locationId}:`, error);
+    throw error;
+  }
+};
+
+export { openDatabase, addLocation, getLocations, deleteLocation };

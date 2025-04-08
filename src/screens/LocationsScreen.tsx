@@ -1,10 +1,10 @@
 // src/screens/LocationsScreen.tsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, Button, StyleSheet, FlatList } from 'react-native';
+import { View, Text, Button, StyleSheet, FlatList,Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { LocationsScreenNavigationProp } from '../navigation/navigationTypes';
 import AddLocationButton from '../components/AddLocationButton';
-import { getLocations } from '../database/databaseService';
+import { getLocations,deleteLocation } from '../database/databaseService';
 
 interface Location {
   location_id: number;
@@ -34,9 +34,41 @@ const LocationsScreen = () => {
     navigation.navigate('Home');
   };
 
+  const handleDeleteLocation = (locationId: number) => {
+    Alert.alert(
+      'Delete Location',
+      'Are you sure you want to delete this location?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteLocation(locationId);
+              loadLocations(); // Refresh the list after deletion
+            } catch (error) {
+              console.error('Error deleting location:', error);
+              Alert.alert('Error', 'Failed to delete location.');
+            }
+          },
+        },
+      ],
+      { cancelable: false }
+    );
+  };
+
   const renderItem = ({ item }: { item: Location }) => (
     <View style={styles.listItem}>
       <Text>{item.location_name}</Text>
+      <Button
+        title="X"
+        onPress={() => handleDeleteLocation(item.location_id)}
+        color="red"
+      />
     </View>
   );
 
@@ -45,7 +77,7 @@ const LocationsScreen = () => {
       <Text style={styles.title}>Storage Locations</Text>
       <View style={styles.buttonContainer}>
         <AddLocationButton onLocationAdded={loadLocations} />
-        <Button title="Back to Scanner" onPress={goBackToHome} />
+        
       </View>
       <FlatList
         data={locations}
@@ -53,6 +85,9 @@ const LocationsScreen = () => {
         renderItem={renderItem}
         style={styles.list}
       />
+      <View style={styles.buttonContainer}>
+        <Button title="BACK" onPress={goBackToHome} />
+      </View>
     </View>
   );
 };
@@ -78,6 +113,9 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   listItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     padding: 15,
     borderBottomWidth: 1,
     borderBottomColor: '#ccc',
