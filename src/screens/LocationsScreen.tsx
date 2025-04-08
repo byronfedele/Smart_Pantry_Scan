@@ -1,36 +1,66 @@
 // src/screens/LocationsScreen.tsx
-import React from 'react';
-import { View, Text, Button, StyleSheet } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, Button, StyleSheet, FlatList } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { LocationsScreenNavigationProp } from '../navigation/navigationTypes';
-import AddLocationButton from '../components/AddLocationButton'; // Adjust path if needed
+import AddLocationButton from '../components/AddLocationButton';
+import { getLocations } from '../database/databaseService';
+
+interface Location {
+  location_id: number;
+  location_name: string;
+}
 
 const LocationsScreen = () => {
   const navigation = useNavigation<LocationsScreenNavigationProp>();
+  const [locations, setLocations] = useState<Location[]>([]);
+
+  const loadLocations = useCallback(async () => {
+    try {
+      const fetchedLocations = await getLocations();
+      setLocations(fetchedLocations);
+    } catch (error) {
+      console.error('Failed to load locations:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadLocations();
+    const unsubscribe = navigation.addListener('focus', loadLocations);
+    return unsubscribe;
+  }, [navigation, loadLocations]);
 
   const goBackToHome = () => {
     navigation.navigate('Home');
   };
 
+  const renderItem = ({ item }: { item: Location }) => (
+    <View style={styles.listItem}>
+      <Text>{item.location_name}</Text>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Storage Locations</Text>
       <View style={styles.buttonContainer}>
-        <AddLocationButton />
+        <AddLocationButton onLocationAdded={loadLocations} />
         <Button title="Back to Scanner" onPress={goBackToHome} />
       </View>
-      {/* We'll display the locations here */}
+      <FlatList
+        data={locations}
+        keyExtractor={(item) => item.location_id.toString()}
+        renderItem={renderItem}
+        style={styles.list}
+      />
     </View>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-
   },
   title: {
     fontSize: 24,
@@ -38,9 +68,20 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   buttonContainer: {
-    marginTop: 20, // Add some space between the title and the buttons
-    alignItems: 'center', // Center the buttons horizontally
-    gap: 10, // Add some space between the buttons
+    marginTop: 20,
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 20,
+  },
+  list: {
+    flex: 1,
+    width: '100%',
+  },
+  listItem: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+    width: '100%',
   },
 });
 

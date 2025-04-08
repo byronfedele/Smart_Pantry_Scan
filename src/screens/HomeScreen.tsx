@@ -83,7 +83,7 @@ const HomeScreen = () => {
       <Button title="Scan Barcode" onPress={handleScanButtonPress} />
       <View style={styles.locationButtonContainer}>
         <Button
-          title="View Locations"
+          title="Locations"
           onPress={() => navigation.navigate('Locations')}
         />
       </View>
