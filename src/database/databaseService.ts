@@ -22,20 +22,32 @@ const openDatabase = async (): Promise<SQLite.SQLiteDatabase> => {
 const createTables = async (db: SQLite.SQLiteDatabase): Promise<void> => { // Rename parameter to 'db'
   try {
     await db.executeSql(`
+      CREATE TABLE IF NOT EXISTS ProductDefinitions (
+    barcode TEXT NOT NULL UNIQUE PRIMARY KEY,
+    product_name TEXT NOT NULL,
+    image_front_url TEXT,
+    quantity TEXT, -- e.g., "1.5 oz", "1 liter", "6 count"
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000),
+    updated_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000)
+    -- Add other relevant product details here as needed
+    );`);
+    console.log('ProductDefinitions table created or already exists');
+
+    await db.executeSql(`
       CREATE TABLE IF NOT EXISTS InventoryItems (
-        item_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        barcode TEXT NOT NULL UNIQUE,
-        product_name TEXT NOT NULL,
-        quantity_in_possession INTEGER NOT NULL DEFAULT 1,
-        location TEXT,
-        expiration_date TEXT,
-        notes TEXT,
-        image_front_url TEXT,
-        scan_timestamp INTEGER NOT NULL,
-        created_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000),
-        updated_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000)
-      );
-    `);
+         item_id INTEGER PRIMARY KEY AUTOINCREMENT,
+      barcode TEXT NOT NULL,
+      scan_timestamp INTEGER NOT NULL,
+      expiration_date TEXT,
+      location_id INTEGER, -- Foreign key to UserLocations
+      notes TEXT,
+      quantity_in_possession REAL DEFAULT 1.0, -- Defined as REAL here
+      created_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000),
+      updated_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000),
+      FOREIGN KEY (barcode) REFERENCES ProductDefinitions(barcode),
+      FOREIGN KEY (location_id) REFERENCES UserLocations(location_id)
+      );`);
+
     console.log('InventoryItems table created or already exists');
 
     await db.executeSql(`
