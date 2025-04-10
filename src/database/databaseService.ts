@@ -23,10 +23,10 @@ const createTables = async (db: SQLite.SQLiteDatabase): Promise<void> => { // Re
   try {
     await db.executeSql(`
       CREATE TABLE IF NOT EXISTS ProductDefinitions (
-    barcode TEXT NOT NULL UNIQUE PRIMARY KEY,
+          product_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    barcode TEXT  UNIQUE,
     product_name TEXT NOT NULL,
     image_front_url TEXT,
-    quantity TEXT, -- e.g., "1.5 oz", "1 liter", "6 count"
     created_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000),
     updated_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000)
     -- Add other relevant product details here as needed
@@ -36,7 +36,7 @@ const createTables = async (db: SQLite.SQLiteDatabase): Promise<void> => { // Re
     await db.executeSql(`
       CREATE TABLE IF NOT EXISTS InventoryItems (
          item_id INTEGER PRIMARY KEY AUTOINCREMENT,
-      barcode TEXT NOT NULL,
+      barcode TEXT, -- Foreign key to ProductDefinitions
       scan_timestamp INTEGER NOT NULL,
       expiration_date TEXT,
       location_id INTEGER, -- Foreign key to UserLocations
@@ -59,6 +59,82 @@ const createTables = async (db: SQLite.SQLiteDatabase): Promise<void> => { // Re
     console.log('UserLocations table created or already exists');
   } catch (error) {
     console.error('Error creating tables:', error);
+    throw error;
+  }
+};
+
+
+const addInventoryItem = async (
+  barcode: string | null,
+  scanTimestamp: number,
+  quantityInPossession: number, // This will be the percentage (0.0 - 1.0)
+  locationId: number | null,
+  expirationDate: string | null,
+  notes: string | null,
+  uniqueItemCode: string | null = null // For future use
+): Promise<void> => {
+  const currentDb = await openDatabase(); // Get the database instance
+
+  console.log('Inside addInventoryItem...');
+  console.log('Barcode:', barcode);
+  console.log('Scan Timestamp:', scanTimestamp);
+  console.log('Quantity in Possession:', quantityInPossession);
+  console.log('Location ID:', locationId);
+  console.log('Expiration Date:', expirationDate);
+  console.log('Notes:', notes);
+
+  if (!currentDb) {
+    throw new Error('Database not initialized in addInventoryItem');
+  }
+  try {
+    const query = `
+      INSERT INTO InventoryItems (
+        barcode,
+        scan_timestamp,
+        quantity_in_possession,
+        location_id,
+        expiration_date,
+        notes
+      ) VALUES (?, ?, ?, ?, ?, ?)
+      `;
+    const params = [
+      barcode,
+      scanTimestamp,
+      quantityInPossession,
+      locationId,
+      expirationDate,
+      notes,
+    ];
+
+    console.log('Executing SQL:', query, params); // Log the query and parameters
+
+    await new Promise<SQLResultSet>((resolve, reject) => {
+      currentDb.executeSql(
+        query,
+        params,
+        (resultSet) => {
+          console.log('executeSql success:', resultSet);
+          resolve(resultSet);
+        },
+        (error) => {
+          console.error('executeSql error:', error);
+          reject(error);
+        }
+      );
+    }).then((results) => {
+      console.log('Results from executeSql (promise):', results);
+      if (results && results.rowsAffected > 0) {
+        console.log('Inventory item added successfully');
+      } else {
+        console.log('Inventory item NOT added or no rows affected (promise).');
+      }
+    }).catch((error) => {
+      console.error('Error during executeSql promise:', error);
+      throw error;
+    });
+
+  } catch (error) {
+    console.error('Error in addInventoryItem (outer catch):', error);
     throw error;
   }
 };
@@ -123,4 +199,8 @@ const deleteLocation = async (locationId: number): Promise<void> => {
   }
 };
 
-export { openDatabase, addLocation, getLocations, deleteLocation };
+
+
+
+
+export { openDatabase, addLocation, getLocations, deleteLocation,addInventoryItem };

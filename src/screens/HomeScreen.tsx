@@ -7,7 +7,6 @@ import { useNavigation } from '@react-navigation/native';
 interface ProductData {
   status: number;
   product_name?: string;
-  quantity?: string;
   image_front_url?: string;
 }
 
@@ -37,45 +36,18 @@ const HomeScreen = () => {
     setError(null);
   }, []);
 
-  const handleBarcodeScanned = useCallback(async (codes: Code[], frame: CodeScannerFrame) => {
-    if (isScanning && codes.length > 0) {
-      const scannedBarcode = codes[0];
-      if (scannedBarcode?.value) {
-        setIsScanning(false);
-        setBarcode(scannedBarcode.value);
-        setLoading(true);
-        setError(null);
-        console.log(scannedBarcode.value);
-
-        const apiUrl = `https://world.openfoodfacts.net/api/v2/product/${scannedBarcode.value}?fields=status,product_name,quantity,image_front_url`;
-
-        try {
-        
-          const response = await fetch(apiUrl);
-          console.log('API Response:', response); // Log the response object
-          const data = await response.json();
-          console.log('API Response Data:', data);
-          console.log('API Status:', data.status);
-
-          if (data.status === 1) {
-            setProductData(data);
-          } else {
-            setError(`Product with barcode ${scannedBarcode.value} not found. Status: ${data.status}`);
-            setProductData(null);
-          }
-        } catch (e: any) {
-
-          console.error('Fetch Error:', e); // Log the entire error object
-          console.error('Fetch Error Message:', e.message); // Log the error message
-          console.error('Fetch Error Stack:', e.stack); // Log the error stack trace
-          setError(`Uh-oh Failed to fetch product information for barcode: ${scannedBarcode.value}`);
-          setProductData(null);
-        } finally {
-          setLoading(false);
-        }
-      }
-    }
-  }, [isScanning]);
+ const handleBarcodeScanned = useCallback(async (codes: Code[], frame: CodeScannerFrame) => {
+     if (isScanning && codes.length > 0) {
+       const scannedBarcode = codes[0];
+       if (scannedBarcode?.value) {
+         setIsScanning(false);
+         console.log('Scanned Barcode:', scannedBarcode.value);
+         navigation.navigate('AddItem', { barcode: scannedBarcode.value }); // Navigate to AddItem and pass the barcode
+         // You might want to reset loading and error states here as well,
+         // or handle the product info fetching in AddItemScreen as we've set up.
+       }
+     }
+   }, [isScanning, navigation]);
 
   const renderHomeScreenContent = () => (
     <View style={styles.container}>
@@ -90,12 +62,11 @@ const HomeScreen = () => {
 
       {loading && <ActivityIndicator size="large" style={styles.loadingIndicator} />}
       {error && <Text style={styles.errorText}>{error}</Text>}
-      {productData && console.log('Current productData Name:', productData.product.product_name)}
-      {productData && productData.product.product_name && (
+      {productData && productData.product?.product_name && (
         <View style={styles.productInfo}>
           <Text style={styles.productName}>{productData.product.product_name}</Text>
-          {productData.product.quantity && <Text>Quantity: {productData.product.quantity}</Text>}
-          {productData.product.image_front_url && (
+          {/* REMOVED THIS LINE */}
+          {productData.product?.image_front_url && (
             <Image source={{ uri: productData.product.image_front_url }} style={styles.productImage} resizeMode="contain" />
           )}
         </View>
