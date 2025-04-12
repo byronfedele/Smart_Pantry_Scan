@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import AppNavigator from './src/navigation/AppNavigator';
 import { openDatabase } from './src/database/databaseService';
-import { GestureHandlerRootView } from 'react-native-gesture-handler'; // Import
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 
 const App = () => {

@@ -42,9 +42,7 @@ const HomeScreen = () => {
        if (scannedBarcode?.value) {
          setIsScanning(false);
          console.log('Scanned Barcode:', scannedBarcode.value);
-         navigation.navigate('AddItem', { barcode: scannedBarcode.value }); // Navigate to AddItem and pass the barcode
-         // You might want to reset loading and error states here as well,
-         // or handle the product info fetching in AddItemScreen as we've set up.
+         navigation.navigate('AddItem', { barcode: scannedBarcode.value });
        }
      }
    }, [isScanning, navigation]);
@@ -58,6 +56,10 @@ const HomeScreen = () => {
           title="Locations"
           onPress={() => navigation.navigate('Locations')}
         />
+        <Button // Add this button
+          title="View Inventory"
+          onPress={() => navigation.navigate('InventoryList')}
+        />
       </View>
 
       {loading && <ActivityIndicator size="large" style={styles.loadingIndicator} />}
@@ -65,7 +67,6 @@ const HomeScreen = () => {
       {productData && productData.product?.product_name && (
         <View style={styles.productInfo}>
           <Text style={styles.productName}>{productData.product.product_name}</Text>
-          {/* REMOVED THIS LINE */}
           {productData.product?.image_front_url && (
             <Image source={{ uri: productData.product.image_front_url }} style={styles.productImage} resizeMode="contain" />
           )}
@@ -174,7 +175,7 @@ const styles = StyleSheet.create({
         right: 20,
       },
       locationButtonContainer: {
-        marginTop: 20, // Add some spacing above the button
+        marginTop: 20,
       },
 });
 

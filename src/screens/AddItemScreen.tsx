@@ -2,11 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, Image, StyleSheet } from 'react-native';
 import { useRoute, useNavigation, ParamListBase, RouteProp } from '@react-navigation/native';
-import { openDatabase, addInventoryItem, getLocations } from '../database/databaseService';
+import { openDatabase, addInventoryItem, getLocations,insertProductDefinition,updateProductDefinitionName } from '../database/databaseService';
 import useOpenFoodFactsApi from '../hooks/useOpenFoodFactsApi'; // Import the hook
 import Slider from '@react-native-community/slider';
 import { Picker } from '@react-native-picker/picker';
-
 interface RouteParams {
   barcode?: string;
 }
@@ -52,29 +51,45 @@ const {
   }, [openFoodFactsData]);
 
 useEffect(() => {
-  // Logic to load product info based on barcode (if available)
   const loadProductInfo = async () => {
-    if (barcode && barcode !== lastFetchedBarcode) { // Check if barcode is new
-      setLastFetchedBarcode(barcode);
+    if (barcode) {
       setLoadingProductInfo(true);
       setErrorProductInfo(null);
       const db = await openDatabase();
-      if (db) { // Check if db object is valid
+      if (db) {
         try {
-          const results = await db.executeSql(
-            'SELECT product_name, image_front_url FROM ProductDefinitions WHERE barcode = ?',
-            [barcode]
-          );
-          if (results && results.rows && results.rows.length > 0) { // Check if results and rows exist
-            const item = results.rows.item(0);
+          console.log("What we are checking in Product Definition");
+          console.log(barcode);
+
+          const dbResult: SQLite.SQLResultSet = await new Promise((resolve, reject) => {
+            db.executeSql(
+              'SELECT product_name, image_front_url FROM ProductDefinitions WHERE barcode = ? LIMIT 1', // Added LIMIT 1
+              [String(barcode)], // Explicit string conversion
+              (resultSet) => {
+                console.log('Query successful:', resultSet);
+                resolve(resultSet);
+              },
+              (error) => {
+                console.error('Query error:', error);
+                reject(error);
+              }
+            );
+          });
+
+          console.log("Checking if barcode exists in product definition"); // Added log
+          console.log("DB Result:", dbResult); // Added log
+
+          if (dbResult && dbResult.rows && dbResult.rows.length > 0) {
+            const item = dbResult.rows.item(0);
             setProductName(item.product_name);
             setImageUrl(item.image_front_url);
+            console.log("IMAGE URL FROM ProductDefinitions",imageUrl); // Add this log
           } else {
             console.log('Product not found locally, calling Open Food Facts API for:', barcode);
             fetchFromOFF(barcode);
           }
         } catch (error: any) {
-          console.error('Error executing SQL:', error);
+          console.error('Error executing SQL:', error); // Log full error object
           setErrorProductInfo(error.message || 'Failed to load local product info.');
         } finally {
           setLoadingProductInfo(false);
@@ -84,14 +99,13 @@ useEffect(() => {
         setErrorProductInfo('Failed to open local database.');
         setLoadingProductInfo(false);
       }
-    } else if (!barcode) {
+    } else {
       resetOFF();
-      setLastFetchedBarcode(null); // Reset last fetched barcode when barcode is null
     }
   };
 
   loadProductInfo();
-}, [barcode, fetchFromOFF, resetOFF, lastFetchedBarcode]); // Add lastFetchedBarcode to the dependency array
+}, [barcode, fetchFromOFF, resetOFF]);
 
  useEffect(() => {
     const fetchLocations = async () => {
@@ -113,28 +127,70 @@ useEffect(() => {
 
   const handleSaveItem = async () => {
       console.log('Inside handleSaveItem...');
-          console.log('Barcode:', barcode);
-          console.log('Quantity Percentage:', quantityPercentage);
-          console.log('Selected Location ID:', selectedLocationId);
-          console.log('Expiration Date:', expirationDate);
-          console.log('Notes:', notes);
-    const db = await openDatabase();
-        console.log('DB object in handleSaveItem:', db);
+      console.log('Barcode:', barcode);
+      console.log('Quantity Percentage:', quantityPercentage);
+      console.log('Selected Location ID:', selectedLocationId);
+      console.log('Expiration Date:', expirationDate);
+      console.log('Notes:', notes);
+      console.log('PRODUCT_NAME', productName);
 
-    try {
-      await addInventoryItem(
-        barcode,
-        Date.now(),
-        quantityPercentage,
-        selectedLocationId, // Use the selected location ID
-        expirationDate,
-        notes
-      );
-      navigation.goBack(); // Go back to the previous screen
-    } catch (error: any) {
-      console.error('Error saving item:', error);
-      // Display error to the user
-    }
+      const db = await openDatabase();
+      console.log('DB object in handleSaveItem:', db);
+
+      try {
+          // Wait for Open Food Facts data if necessary
+          if (barcode && openFoodFactsLoading) {
+              console.log('Waiting for Open Food Facts data...');
+              while (openFoodFactsLoading) {
+                  await new Promise(resolve => setTimeout(resolve, 100));
+              }
+              console.log('Open Food Facts data fetch complete.');
+          }
+
+          await addInventoryItem(
+              barcode,
+              Date.now(),
+              quantityPercentage,
+              selectedLocationId,
+              expirationDate,
+              notes,
+              productName
+          );
+
+          // Check if the product already exists in ProductDefinitions
+          if (db) {
+              const results: SQLite.SQLResultSet = await new Promise((resolve, reject) => {
+                  db.executeSql(
+                      'SELECT product_name FROM ProductDefinitions WHERE barcode = ? LIMIT 1',
+                      [String(barcode)],
+                      (resultSet) => {
+                          console.log('ProductDefinitions SELECT success:', resultSet);
+                          resolve(resultSet);
+                      },
+                      (error) => {
+                          console.error('ProductDefinitions SELECT error:', error);
+                          reject(error);
+                      }
+                  );
+              });
+
+              if (results && results.rows && results.rows.length > 0) {
+                  // Product exists, update the product name
+                  await updateProductDefinitionName(barcode, productName);
+              } else if (productName && openFoodFactsData && openFoodFactsData.image_front_url) {
+                  // Product doesn't exist, insert new product
+                  await insertProductDefinition(
+                      barcode,
+                      productName,
+                      openFoodFactsData.image_front_url
+                  );
+              }
+          }
+
+          navigation.goBack();
+      } catch (error: any) {
+          console.error('Error saving item:', error);
+      }
   };
 
   return (
@@ -150,7 +206,7 @@ useEffect(() => {
       <TextInput
         style={styles.input}
         value={productName}
-        onChangeText={setProductName}
+        onChangeText={(text) => setProductName(text)}
         placeholder="Product Name"
       />
 
