@@ -362,6 +362,37 @@ const deleteLocation = async (locationId: number): Promise<void> => {
 
 
 
+// src/database/databaseService.ts
+// ... (Your other database functions)
 
+const updateInventoryItem = async (
+  itemId: number,
+  quantity: number,
+  locationId: number | null
+): Promise<void> => {
+  const currentDb = await openDatabase();
+  if (!currentDb) {
+    throw new Error('Database not initialized');
+  }
+  try {
+    await currentDb.executeSql(
+      'UPDATE InventoryItems SET quantity_in_possession = ?, location_id = ? WHERE item_id = ?',
+      [quantity, locationId, itemId]
+    );
+    console.log(`Inventory item ${itemId} updated successfully`);
+  } catch (error) {
+    console.error(`Error updating inventory item ${itemId}:`, error);
+    throw error;
+  }
+};
 
-export { openDatabase, addLocation, getLocations, deleteLocation,addInventoryItem ,insertProductDefinition,updateProductDefinitionName};
+export {
+  openDatabase,
+  addLocation,
+  getLocations,
+  deleteLocation,
+  addInventoryItem,
+  insertProductDefinition,
+  updateProductDefinitionName,
+  updateInventoryItem, // Export the new function
+};

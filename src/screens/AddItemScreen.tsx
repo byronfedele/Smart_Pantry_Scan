@@ -12,7 +12,7 @@ interface RouteParams {
 
 const AddItemScreen = () => {
   const route = useRoute<RouteProp<ParamListBase, 'AddItem'>>();
-  const { barcode } = route.params;
+  const barcode = route.params?.barcode;
   const navigation = useNavigation();
 
   const [productName, setProductName] = useState('');
