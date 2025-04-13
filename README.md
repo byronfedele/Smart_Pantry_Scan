@@ -86,4 +86,4 @@ This project is licensed under the [MIT License](LICENSE). See the `LICENSE` fil
 
 ---
 
-**Note:** This README reflects the current state of the project as of April 7, 2025. The "Planned Features" section outlines the general direction and may evolve over time.
+**Note:** This README reflects the current state of the project as of April 13, 2025. The "Planned Features" section outlines the general direction and may evolve over time.  IOS may not work at the moment but is part of the plan.
