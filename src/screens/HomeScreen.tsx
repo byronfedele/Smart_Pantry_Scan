@@ -3,6 +3,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { StyleSheet, View, Text, Button, Image, ActivityIndicator } from 'react-native';
 import { Camera, useCameraDevices, CameraDevice, Code, CodeScannerFrame } from 'react-native-vision-camera';
 import { useNavigation } from '@react-navigation/native';
+import useGlobalStyles from '../styles/globalStyles'; // Import global styles hook
+import { useTheme } from '../context/ThemeContext'; // Import theme context
 
 interface ProductData {
   status: number;
@@ -12,6 +14,8 @@ interface ProductData {
 
 const HomeScreen = () => {
   const navigation = useNavigation();
+  const { colors } = useTheme(); // Get theme colors
+  const globalStyles = useGlobalStyles(); // Get global styles
   const [hasPermission, setHasPermission] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [productData, setProductData] = useState<ProductData | null>(null);
@@ -46,36 +50,36 @@ const HomeScreen = () => {
   }, [isScanning, navigation]);
 
   const renderHomeScreenContent = () => (
-     <View style={styles.container}>
-          <Text style={styles.title}>Open Food Facts Scanner</Text>
-          <Button title="Scan Barcode" onPress={handleScanButtonPress} />
+    <View style={[globalStyles.globalContainer, { backgroundColor: colors.background }]}>
+      <Text style={[globalStyles.globalTitle, { color: colors.text }]}>Open Food Facts Scanner</Text>
+      <Button title="Scan Barcode" onPress={handleScanButtonPress} />
 
-          <View style={styles.buttonContainer}>
-            <View style={styles.buttonWrapper}>
-              <Button
-                title="Manual Entry"
-                onPress={() => navigation.navigate('AddItem')}
-              />
-            </View>
-            <View style={styles.buttonContainer}>
-              <Button
-                title="Locations"
-                onPress={() => navigation.navigate('Locations')}
-              />
-            </View>
-            <View style={styles.buttonContainer}>
-              <Button
-                title="View Inventory"
-                onPress={() => navigation.navigate('InventoryList')}
-              />
-            </View>
-          </View>
+      <View style={styles.buttonContainer}>
+        <View style={styles.buttonWrapper}>
+          <Button
+            title="Manual Entry"
+            onPress={() => navigation.navigate('AddItem')}
+          />
+        </View>
+        <View style={styles.buttonContainer}>
+          <Button
+            title="Locations"
+            onPress={() => navigation.navigate('Locations')}
+          />
+        </View>
+        <View style={styles.buttonContainer}>
+          <Button
+            title="View Inventory"
+            onPress={() => navigation.navigate('InventoryList')}
+          />
+        </View>
+      </View>
 
       {loading && <ActivityIndicator size="large" style={styles.loadingIndicator} />}
-      {error && <Text style={styles.errorText}>{error}</Text>}
+      {error && <Text style={[styles.errorText, { color: colors.negative }]}>{error}</Text>}
       {productData && productData.product_name && (
         <View style={styles.productInfo}>
-          <Text style={styles.productName}>{productData.product_name}</Text>
+          <Text style={[styles.productName, { color: colors.text }]}>{productData.product_name}</Text>
           {productData.image_front_url && (
             <Image
               source={{ uri: productData.image_front_url }}
@@ -92,7 +96,7 @@ const HomeScreen = () => {
     if (!device) {
       return (
         <View style={styles.scannerContainer}>
-          <Text>No back camera available</Text>
+          <Text style={{ color: colors.text }}>No back camera available</Text>
           <Button title="Go Back" onPress={() => setIsScanning(false)} />
         </View>
       );
@@ -129,8 +133,8 @@ const HomeScreen = () => {
 
   if (!hasPermission) {
     return (
-      <View style={styles.container}>
-        <Text>Camera permission not granted</Text>
+      <View style={[globalStyles.globalContainer, { backgroundColor: colors.background }]}>
+        <Text style={{ color: colors.text }}>Camera permission not granted</Text>
       </View>
     );
   }
@@ -143,33 +147,15 @@ const HomeScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
+  buttonContainer: {
+    marginTop: 20,
   },
   loadingIndicator: {
     marginTop: 20,
   },
-  errorText: {
-    marginTop: 20,
-    color: 'red',
-  },
   productInfo: {
     marginTop: 30,
     alignItems: 'center',
-  },
-  productName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    textAlign: 'center',
   },
   productImage: {
     width: 200,
@@ -186,9 +172,6 @@ const styles = StyleSheet.create({
     bottom: 20,
     left: 20,
     right: 20,
-  },
-  buttonContainer: {
-    marginTop: 20,
   },
 });
 

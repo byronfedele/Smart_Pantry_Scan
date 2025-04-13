@@ -207,6 +207,8 @@ const addInventoryItem = async (
   }
   try {
       console.log('productName right before insert', productName); // added log
+      const roundedQuantity = parseFloat(quantityInPossession.toFixed(2));
+
     const query = `
       INSERT INTO InventoryItems (
           product_name,
@@ -222,7 +224,7 @@ const addInventoryItem = async (
       productName,
       barcode,
       scanTimestamp,
-      quantityInPossession,
+      roundedQuantity,
       locationId,
       expirationDate,
       notes,
@@ -360,11 +362,6 @@ const deleteLocation = async (locationId: number): Promise<void> => {
   }
 };
 
-
-
-// src/database/databaseService.ts
-// ... (Your other database functions)
-
 const updateInventoryItem = async (
   itemId: number,
   quantity: number,
@@ -375,13 +372,91 @@ const updateInventoryItem = async (
     throw new Error('Database not initialized');
   }
   try {
+    const roundedQuantity = parseFloat(quantity.toFixed(2)); // Round to 2 decimal places in JavaScript
+    console.log("Rounded quantity:", roundedQuantity);
     await currentDb.executeSql(
       'UPDATE InventoryItems SET quantity_in_possession = ?, location_id = ? WHERE item_id = ?',
-      [quantity, locationId, itemId]
+      [roundedQuantity, locationId, itemId]
     );
     console.log(`Inventory item ${itemId} updated successfully`);
   } catch (error) {
     console.error(`Error updating inventory item ${itemId}:`, error);
+    throw error;
+  }
+};
+
+interface InventoryItem {
+  item_id: number;
+  product_name: string;
+  barcode: string;
+  scan_timestamp: number;
+  expiration_date: string | null;
+  location_id: number | null;
+  notes: string | null;
+  quantity_in_possession: number;
+  image_url: string | null;
+  created_at: number;
+  updated_at: number;
+}
+
+const getInventoryItems = async (
+  locationId: number | null,
+  createdFrom: number | null,
+  createdTo: number | null,
+  quantityMin: number,
+  quantityMax: number
+): Promise<InventoryItem[]> => {
+  const db = await openDatabase();
+  if (!db) {
+    throw new Error('Database not initialized');
+  }
+
+  try {
+    let query = `
+      SELECT InventoryItems.*, ProductDefinitions.image_front_url
+      FROM InventoryItems
+      LEFT JOIN ProductDefinitions ON InventoryItems.barcode = ProductDefinitions.barcode
+    `;
+    const queryParams: any[] = [];
+    const whereClauses: string[] = [];
+
+    if (locationId) {
+      whereClauses.push('InventoryItems.location_id = ?');
+      queryParams.push(locationId);
+    }
+
+    if (createdFrom) {
+      whereClauses.push('InventoryItems.created_at >= ?');
+      queryParams.push(createdFrom);
+    }
+
+    if (createdTo) {
+      whereClauses.push('InventoryItems.created_at <= ?');
+      queryParams.push(createdTo);
+    }
+
+    whereClauses.push('InventoryItems.quantity_in_possession >= ? AND InventoryItems.quantity_in_possession <= ?');
+    queryParams.push(quantityMin, quantityMax);
+
+    if (whereClauses.length > 0) {
+      query += ' WHERE ' + whereClauses.join(' AND ');
+    }
+
+    const inventoryResults = await new Promise<SQLite.SQLResultSet>((resolve, reject) => {
+      db.executeSql(query, queryParams, (resultSet) => resolve(resultSet), (error) => reject(error));
+    });
+
+    const items: InventoryItem[] = [];
+    for (let i = 0; i < inventoryResults.rows.length; i++) {
+      items.push({
+        ...inventoryResults.rows.item(i),
+        image_url: inventoryResults.rows.item(i).image_front_url,
+      });
+    }
+
+    return items;
+  } catch (error) {
+    console.error('Error fetching inventory items:', error);
     throw error;
   }
 };
@@ -394,5 +469,6 @@ export {
   addInventoryItem,
   insertProductDefinition,
   updateProductDefinitionName,
-  updateInventoryItem, // Export the new function
+  updateInventoryItem,
+  getInventoryItems, // Export the new function
 };

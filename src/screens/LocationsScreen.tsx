@@ -1,10 +1,12 @@
 // src/screens/LocationsScreen.tsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, Button, StyleSheet, FlatList,Alert } from 'react-native';
+import { View, Text, Button, StyleSheet, FlatList, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { LocationsScreenNavigationProp } from '../navigation/navigationTypes';
 import AddLocationButton from '../components/AddLocationButton';
-import { getLocations,deleteLocation } from '../database/databaseService';
+import { getLocations, deleteLocation } from '../database/databaseService';
+import useGlobalStyles from '../styles/globalStyles';
+import { useTheme } from '../context/ThemeContext';
 
 interface Location {
   location_id: number;
@@ -13,6 +15,8 @@ interface Location {
 
 const LocationsScreen = () => {
   const navigation = useNavigation<LocationsScreenNavigationProp>();
+  const { colors } = useTheme();
+  const globalStyles = useGlobalStyles();
   const [locations, setLocations] = useState<Location[]>([]);
 
   const loadLocations = useCallback(async () => {
@@ -49,7 +53,7 @@ const LocationsScreen = () => {
           onPress: async () => {
             try {
               await deleteLocation(locationId);
-              loadLocations(); // Refresh the list after deletion
+              loadLocations();
             } catch (error) {
               console.error('Error deleting location:', error);
               Alert.alert('Error', 'Failed to delete location.');
@@ -62,8 +66,8 @@ const LocationsScreen = () => {
   };
 
   const renderItem = ({ item }: { item: Location }) => (
-    <View style={styles.listItem}>
-      <Text>{item.location_name}</Text>
+    <View style={[styles.listItem, { borderBottomColor: colors.divider }]}>
+      <Text style={{ color: colors.text }}>{item.location_name}</Text>
       <Button
         title="X"
         onPress={() => handleDeleteLocation(item.location_id)}
@@ -73,11 +77,10 @@ const LocationsScreen = () => {
   );
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Storage Locations</Text>
+    <View style={[globalStyles.globalContainer, { backgroundColor: colors.background }]}>
+      <Text style={[globalStyles.globalTitle, { color: colors.text }]}>Storage Locations</Text>
       <View style={styles.buttonContainer}>
         <AddLocationButton onLocationAdded={loadLocations} />
-        
       </View>
       <FlatList
         data={locations}
@@ -91,17 +94,8 @@ const LocationsScreen = () => {
     </View>
   );
 };
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    padding: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
   buttonContainer: {
     marginTop: 20,
     alignItems: 'center',
@@ -118,7 +112,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
     width: '100%',
   },
 });

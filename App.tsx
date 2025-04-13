@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import AppNavigator from './src/navigation/AppNavigator';
 import { openDatabase } from './src/database/databaseService';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-
+import { ThemeProvider } from './src/context/ThemeContext'; // Import ThemeProvider
 
 const App = () => {
   useEffect(() => {
@@ -21,7 +21,9 @@ const App = () => {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <AppNavigator />
+      <ThemeProvider>
+        <AppNavigator />
+      </ThemeProvider>
     </GestureHandlerRootView>
   );
 };

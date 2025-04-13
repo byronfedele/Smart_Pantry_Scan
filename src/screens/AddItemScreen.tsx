@@ -6,14 +6,28 @@ import { openDatabase, addInventoryItem, getLocations,insertProductDefinition,up
 import useOpenFoodFactsApi from '../hooks/useOpenFoodFactsApi'; // Import the hook
 import Slider from '@react-native-community/slider';
 import { Picker } from '@react-native-picker/picker';
+import useGlobalStyles from '../styles/globalStyles';
+import { useTheme } from '../context/ThemeContext';
+
+
+
 interface RouteParams {
   barcode?: string;
 }
 
 const AddItemScreen = () => {
+ const { colors } = useTheme(); // Call the hook first
+  const globalStyles = useGlobalStyles(); // Call the hook
+  const styles = StyleSheet.create({
+         item: globalStyles.item, // Use global item style
+         buttonContainer: globalStyles.buttonContainer, // Use global buttonContainer style
+         image: globalStyles.image, // Use global image style
+       });
+
   const route = useRoute<RouteProp<ParamListBase, 'AddItem'>>();
   const barcode = route.params?.barcode;
   const navigation = useNavigation();
+
 
   const [productName, setProductName] = useState('');
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -191,106 +205,71 @@ useEffect(() => {
       } catch (error: any) {
           console.error('Error saving item:', error);
       }
+
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Add New Item</Text>
+     <View style={[globalStyles.globalContainer, { backgroundColor: colors.background }]}>
+       <Text style={[globalStyles.globalTitle, { color: colors.text }]}>Add New Item</Text>
 
-      {loadingProductInfo && <Text>Loading product info...</Text>}
-      {errorProductInfo && <Text style={styles.errorText}>{errorProductInfo}</Text>}
+       {loadingProductInfo && <Text style={{ color: colors.text }}>Loading product info...</Text>}
+       {errorProductInfo && <Text style={[globalStyles.errorText, { color: colors.negative }]}>{errorProductInfo}</Text>}
 
-      {imageUrl && <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="contain" />}
+       {imageUrl && <Image source={{ uri: imageUrl }} style={globalStyles.image} resizeMode="contain" />}
 
-      <Text style={styles.label}>Product Name:</Text>
-      <TextInput
-        style={styles.input}
-        value={productName}
-        onChangeText={(text) => setProductName(text)}
-        placeholder="Product Name"
-      />
+       <Text style={[globalStyles.label, { color: colors.text }]}>Product Name:</Text>
+       <TextInput
+         style={[globalStyles.input, { color: colors.text }]}
+         value={productName}
+         onChangeText={(text) => setProductName(text)}
+         placeholder="Product Name"
+       />
 
-      <Text style={styles.label}>Quantity (%)</Text>
-      <Slider
-        style={styles.slider}
-        minimumValue={0}
-        maximumValue={1}
-        step={0.01}
-        value={quantityPercentage}
-        onValueChange={setQuantityPercentage}
-      />
-      <Text style={styles.percentage}>{Math.round(quantityPercentage * 100)}%</Text>
+       <Text style={[globalStyles.label, { color: colors.text }]}>Quantity (%)</Text>
+       <Slider
+         style={globalStyles.slider}
+         minimumValue={0}
+         maximumValue={1}
+         step={0.01}
+         value={quantityPercentage}
+         onValueChange={setQuantityPercentage}
+       />
+       <Text style={[globalStyles.percentage, { color: colors.text }]}>{Math.round(quantityPercentage * 100)}%</Text>
 
-   <Text style={styles.label}>Location:</Text>
-         <Picker
-           selectedValue={selectedLocationId}
-           style={styles.picker}
-           onValueChange={(itemValue) => setSelectedLocationId(itemValue as number | null)}
-         >
-           <Picker.Item label="Select Location" value={null} />
-           {locations.map((loc) => (
-             <Picker.Item key={loc.location_id} label={loc.location_name} value={loc.location_id} />
-           ))}
-         </Picker>
-      <Text style={styles.label}>Expiration Date (Optional):</Text>
-      <TextInput
-        style={styles.input}
-        value={expirationDate}
-        onChangeText={setExpirationDate}
-        placeholder="YYYY-MM-DD"
-      />
+       <Text style={[globalStyles.label, { color: colors.text }]}>Location:</Text>
+       <Picker
+         selectedValue={selectedLocationId}
+         style={globalStyles.picker}
+         onValueChange={(itemValue) => setSelectedLocationId(itemValue as number | null)}
+       >
+         <Picker.Item label="Select Location" value={null} />
+         {locations.map((loc) => (
+           <Picker.Item key={loc.location_id} label={loc.location_name} value={loc.location_id} />
+         ))}
+       </Picker>
+       <Text style={[globalStyles.label, { color: colors.text }]}>Expiration Date (Optional):</Text>
+       <TextInput
+         style={[globalStyles.input, { color: colors.text }]}
+         value={expirationDate}
+         onChangeText={setExpirationDate}
+         placeholder="YYYY-MM-DD"
+       />
 
-      <Text style={styles.label}>Notes (Optional):</Text>
-      <TextInput
-        style={styles.input}
-        value={notes}
-        onChangeText={setNotes}
-        placeholder="Notes"
-        multiline
-      />
+       <Text style={[globalStyles.label, { color: colors.text }]}>Notes (Optional):</Text>
+       <TextInput
+         style={[globalStyles.input, { color: colors.text }]}
+         value={notes}
+         onChangeText={setNotes}
+         placeholder="Notes"
+         multiline
+       />
 
-      <Button title="Save Item" onPress={handleSaveItem} />
-      <Button title="Cancel" onPress={() => navigation.goBack()} />
-    </View>
-  );
-};
+       <Button title="Save Item" onPress={handleSaveItem} />
+       <Button title="Cancel" onPress={() => navigation.goBack()} />
+     </View>
+   );
+ };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 20,
-  },
-  label: {
-    marginTop: 10,
-    fontWeight: 'bold',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 10,
-  },
-  image: {
-    width: 100,
-    height: 100,
-    marginBottom: 10,
-  },
-  slider: {
-    marginBottom: 10,
-  },
-  percentage: {
-    marginBottom: 10,
-  },
-  errorText: {
-    color: 'red',
-    marginBottom: 10,
-  },
-});
 
-export default AddItemScreen;
+
+ export default AddItemScreen;
