@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Pantry Scan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+    <style>
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #dbf6fa; }
+        .dark ::-webkit-scrollbar-track { background: #273f43; }
+        ::-webkit-scrollbar-thumb { background: #00424a; border-radius: 10px; }
+        .dark ::-webkit-scrollbar-thumb { background: #bac6ea; }
+        .modal-enter { opacity: 0; transform: scale(0.95); }
+        .modal-enter-active { opacity: 1; transform: scale(1); transition: opacity 300ms, transform 300ms; }
+        .modal-leave-active { opacity: 0; transform: scale(0.95); transition: opacity 300ms, transform 300ms; }
+        .custom-focus-ring:focus { outline: none; box-shadow: 0 0 0 3px rgba(47, 59, 88, 0.5); }
+        .dark .custom-focus-ring:focus { box-shadow: 0 0 0 3px rgba(186, 198, 234, 0.6); }
+        #video, #canvas { max-width: 100%; border-radius: 0.5rem; }
+    </style>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-dark': '#00424a', 'primary-light': '#edfcff',
+                        'secondary-dark': '#273f43', 'secondary-light': '#dbf6fa',
+                        'tertiary-dark': '#2f3b58', 'tertiary-light': '#bac6ea',
+                        'app-bg': '#cde7ec', 'error': '#de3730',
+                        'neutral-dark': '#393c3d', 'neutral-light': '#f8fafa',
+                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'], },
+                },
+            },
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-app-bg dark:bg-secondary-dark font-sans text-neutral-dark dark:text-neutral-light transition-colors duration-300">
+
+    <div id="app" class="min-h-screen p-4 sm:p-6 lg:p-8">
+        <div class="max-w-7xl mx-auto">
+            <!-- Header -->
+            <header class="flex justify-between items-center mb-6">
+                <h1 class="text-2xl sm:text-3xl font-bold text-primary-dark dark:text-primary-light">InventoryPro</h1>
+                <div class="flex items-center space-x-2 sm:space-x-4">
+                    <button id="scanItemBtn" class="flex items-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-300 custom-focus-ring">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                        <span class="hidden sm:inline">Scan Item</span>
+                    </button>
+                    <button id="addItemBtn" class="flex items-center bg-primary-dark hover:bg-tertiary-dark text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-300 custom-focus-ring">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                        <span class="hidden sm:inline">Add Manually</span>
+                    </button>
+                    <button id="theme-toggle" class="p-2 rounded-full bg-secondary-light dark:bg-tertiary-dark text-primary-dark dark:text-primary-light custom-focus-ring transition-colors duration-300">
+                        <svg id="theme-icon-light" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                        <svg id="theme-icon-dark" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Filters -->
+            <div class="bg-primary-light dark:bg-secondary-dark p-4 rounded-lg shadow-md mb-6">
+                <details open>
+                    <summary class="font-semibold text-lg cursor-pointer text-primary-dark dark:text-primary-light flex justify-between items-center">
+                        <span>Filters & Search</span>
+                        <svg class="w-6 h-6 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </summary>
+                    <div id="filters" class="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div>
+                            <label for="search" class="block text-sm font-medium text-neutral-dark dark:text-neutral-light mb-1">Search by Name</label>
+                            <input type="text" id="search" placeholder="e.g., Laptop" class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-neutral-dark dark:text-neutral-light mb-1">Quantity Range</label>
+                            <div class="flex space-x-2">
+                                <input type="number" id="minQty" placeholder="Min" class="w-1/2 p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
+                                <input type="number" id="maxQty" placeholder="Max" class="w-1/2 p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-neutral-dark dark:text-neutral-light mb-1">Date Added Range</label>
+                            <div class="flex space-x-2">
+                                <input type="date" id="startDate" class="w-1/2 p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
+                                <input type="date" id="endDate" class="w-1/2 p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-neutral-dark dark:text-neutral-light mb-1">Storage Location</label>
+                            <div id="locationFilters" class="max-h-24 overflow-y-auto space-y-1 p-2 bg-white dark:bg-tertiary-dark rounded-md border border-tertiary-light dark:border-tertiary-dark">
+                            </div>
+                        </div>
+                    </div>
+                </details>
+            </div>
+
+            <!-- Inventory Table -->
+            <div class="bg-primary-light dark:bg-secondary-dark rounded-lg shadow-lg overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-[640px]">
+                        <thead class="bg-secondary-light dark:bg-tertiary-dark">
+                            <tr>
+                                <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider cursor-pointer" data-sort="name">Name</th>
+                                <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider cursor-pointer" data-sort="quantity">Quantity</th>
+                                <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider cursor-pointer" data-sort="location">Location</th>
+                                <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider cursor-pointer" data-sort="dateAdded">Date Added</th>
+                                <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventory-table-body"></tbody>
+                    </table>
+                </div>
+                <div id="no-results" class="hidden text-center p-8 text-neutral-dark dark:text-neutral-light">
+                    <p class="text-lg font-medium">No items found.</p>
+                    <p class="text-sm">Try adjusting your filters or add a new item.</p>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div id="pagination" class="mt-6 flex justify-between items-center flex-wrap gap-2"></div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Item Modal -->
+    <div id="itemModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-primary-light dark:bg-secondary-dark rounded-lg shadow-xl w-full max-w-md p-6 modal-enter">
+            <h2 id="modalTitle" class="text-2xl font-bold mb-4 text-primary-dark dark:text-primary-light">Add New Item</h2>
+            <form id="itemForm">
+                <input type="hidden" id="itemId">
+                <div class="mb-4">
+                    <label for="itemName" class="block text-sm font-medium mb-1">Item Name</label>
+                    <input type="text" id="itemName" required class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
+                </div>
+                <div class="mb-4">
+                    <label for="itemQuantity" class="block text-sm font-medium mb-1">Quantity</label>
+                    <input type="number" id="itemQuantity" required min="0" class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
+                </div>
+                <div class="mb-6">
+                    <label for="itemLocation" class="block text-sm font-medium mb-1">Storage Location</label>
+                    <input type="text" id="itemLocation" placeholder="e.g., Pantry" required class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
+                </div>
+                <div class="flex justify-end space-x-4">
+                    <button type="button" id="cancelBtn" class="py-2 px-4 rounded-lg bg-neutral-light dark:bg-neutral-dark">Cancel</button>
+                    <button type="submit" id="saveBtn" class="py-2 px-6 rounded-lg bg-primary-dark text-white font-bold">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scan Item Modal -->
+    <div id="scanModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-primary-light dark:bg-secondary-dark rounded-lg shadow-xl w-full max-w-2xl p-6 modal-enter space-y-4">
+            <h2 class="text-2xl font-bold text-primary-dark dark:text-primary-light">Scan Product Label</h2>
+            <div id="video-container" class="bg-gray-900 rounded-lg flex justify-center items-center relative">
+                <video id="video" autoplay playsinline class="w-full"></video>
+            </div>
+            <canvas id="canvas" class="hidden"></canvas>
+            <div id="status-container" class="p-4 rounded-lg text-center bg-white dark:bg-tertiary-dark">
+                <p id="status" class="font-medium">Initializing...</p>
+            </div>
+            <div class="flex justify-center space-x-4">
+                <button type="button" id="cancelScanBtn" class="py-2 px-4 rounded-lg bg-neutral-light dark:bg-neutral-dark">Cancel</button>
+                <button id="captureBtn" class="py-2 px-6 rounded-lg bg-blue-600 text-white font-bold" disabled>Loading Model...</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-primary-light dark:bg-secondary-dark rounded-lg shadow-xl w-full max-w-sm p-6 modal-enter">
+            <h2 class="text-xl font-bold mb-4 text-primary-dark dark:text-primary-light">Confirm Deletion</h2>
+            <p class="mb-6">Are you sure you want to delete this item? This action cannot be undone.</p>
+            <div class="flex justify-end space-x-4">
+                <button id="confirmCancelBtn" class="py-2 px-4 rounded-lg bg-neutral-light dark:bg-neutral-dark">Cancel</button>
+                <button id="confirmDeleteBtn" class="py-2 px-4 rounded-lg bg-error text-white font-bold">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const inventoryApp = {
+                inventory: [],
+                filteredInventory: [],
+                currentPage: 1,
+                itemsPerPage: 10,
+                sortConfig: { key: 'dateAdded', direction: 'desc' },
+                itemToDeleteId: null,
+
+                init() {
+                    this.initDOMElements();
+                    this.loadTheme();
+                    this.loadInventory();
+                    this.addEventListeners();
+                    this.render();
+                    window.scannerApp.init(this);
+                },
+
+                initDOMElements() {
+                    this.themeToggle = document.getElementById('theme-toggle');
+                    this.addItemBtn = document.getElementById('addItemBtn');
+                    this.scanItemBtn = document.getElementById('scanItemBtn');
+                    this.itemModal = document.getElementById('itemModal');
+                    this.scanModal = document.getElementById('scanModal');
+                    this.confirmModal = document.getElementById('confirmModal');
+                    this.cancelBtn = document.getElementById('cancelBtn');
+                    this.cancelScanBtn = document.getElementById('cancelScanBtn');
+                    this.confirmCancelBtn = document.getElementById('confirmCancelBtn');
+                    this.confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+                    this.itemForm = document.getElementById('itemForm');
+                    this.tableBody = document.getElementById('inventory-table-body');
+                    this.paginationContainer = document.getElementById('pagination');
+                    this.filterInputs = document.querySelectorAll('#filters input, #filters select');
+                    this.locationFiltersContainer = document.getElementById('locationFilters');
+                    this.noResultsDiv = document.getElementById('no-results');
+                    this.captureBtn = document.getElementById('captureBtn');
+                    this.statusEl = document.getElementById('status');
+                    this.video = document.getElementById('video');
+                    this.canvas = document.getElementById('canvas');
+                },
+
+                addEventListeners() {
+                    this.themeToggle.addEventListener('click', () => this.toggleTheme());
+                    this.addItemBtn.addEventListener('click', () => this.openItemForm());
+                    this.scanItemBtn.addEventListener('click', () => window.scannerApp.startScan());
+                    this.cancelBtn.addEventListener('click', () => this.closeModal(this.itemModal));
+                    this.cancelScanBtn.addEventListener('click', () => window.scannerApp.stopScan());
+                    this.captureBtn.addEventListener('click', () => window.scannerApp.capture());
+                    this.itemForm.addEventListener('submit', (e) => this.handleFormSubmit(e));
+                    this.confirmCancelBtn.addEventListener('click', () => this.closeModal(this.confirmModal));
+                    this.confirmDeleteBtn.addEventListener('click', () => this.handleDelete());
+                    this.tableBody.addEventListener('click', (e) => this.handleTableActions(e));
+                    this.paginationContainer.addEventListener('click', (e) => this.handlePaginationClick(e));
+                    document.querySelector('thead').addEventListener('click', (e) => this.handleSort(e));
+                    this.filterInputs.forEach(input => input.addEventListener('input', () => this.handleFilterChange()));
+                    this.locationFiltersContainer.addEventListener('change', () => this.handleFilterChange());
+                },
+                
+                loadTheme() {
+                    const isDark = localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                    document.documentElement.classList.toggle('dark', isDark);
+                    document.getElementById('theme-icon-light').classList.toggle('hidden', isDark);
+                    document.getElementById('theme-icon-dark').classList.toggle('hidden', !isDark);
+                },
+
+                toggleTheme() {
+                    const isDark = document.documentElement.classList.toggle('dark');
+                    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                    this.loadTheme();
+                },
+
+                loadInventory() {
+                    const stored = localStorage.getItem('inventory');
+                    this.inventory = stored ? JSON.parse(stored) : [];
+                },
+
+                saveInventory() {
+                    localStorage.setItem('inventory', JSON.stringify(this.inventory));
+                },
+
+                openModal(modal) {
+                    modal.classList.remove('hidden');
+                    modal.firstElementChild.classList.add('modal-enter-active');
+                },
+
+                closeModal(modal) {
+                    modal.firstElementChild.classList.remove('modal-enter-active');
+                    setTimeout(() => modal.classList.add('hidden'), 300);
+                },
+
+                openItemForm(item = null) {
+                    this.itemForm.reset();
+                    document.getElementById('modalTitle').textContent = item ? 'Edit Item' : 'Add New Item';
+                    const itemIdInput = document.getElementById('itemId');
+                    itemIdInput.value = item ? item.id : '';
+                    if (item) {
+                        document.getElementById('itemName').value = item.name;
+                        document.getElementById('itemQuantity').value = item.quantity;
+                        document.getElementById('itemLocation').value = item.location;
+                    }
+                    this.openModal(this.itemModal);
+                },
+                
+                openConfirmModal(id) {
+                    this.itemToDeleteId = id;
+                    this.openModal(this.confirmModal);
+                },
+
+                handleFormSubmit(e) {
+                    e.preventDefault();
+                    const id = document.getElementById('itemId').value;
+                    const newItem = {
+                        name: document.getElementById('itemName').value,
+                        quantity: parseInt(document.getElementById('itemQuantity').value, 10),
+                        location: document.getElementById('itemLocation').value,
+                    };
+                    if (id) {
+                        const index = this.inventory.findIndex(item => item.id == id);
+                        if (index !== -1) this.inventory[index] = { ...this.inventory[index], ...newItem };
+                    } else {
+                        newItem.id = Date.now();
+                        newItem.dateAdded = new Date().toISOString();
+                        this.inventory.push(newItem);
+                    }
+                    this.saveInventory();
+                    this.render();
+                    this.closeModal(this.itemModal);
+                },
+
+                handleDelete() {
+                    this.inventory = this.inventory.filter(item => item.id !== this.itemToDeleteId);
+                    this.saveInventory();
+                    this.render();
+                    this.closeModal(this.confirmModal);
+                },
+                
+                handleTableActions(e) {
+                    const editBtn = e.target.closest('.edit-btn');
+                    if (editBtn) {
+                        const item = this.inventory.find(i => i.id == editBtn.dataset.id);
+                        if (item) this.openItemForm(item);
+                    }
+                    const deleteBtn = e.target.closest('.delete-btn');
+                    if (deleteBtn) {
+                        this.openConfirmModal(parseInt(deleteBtn.dataset.id, 10));
+                    }
+                },
+                
+                handlePaginationClick(e) {
+                    const pageBtn = e.target.closest('.page-btn');
+                    if (pageBtn && !pageBtn.disabled) {
+                        this.currentPage = parseInt(pageBtn.dataset.page, 10);
+                        this.render();
+                    }
+                },
+                
+                handleSort(e) {
+                    const key = e.target.closest('th')?.dataset.sort;
+                    if (!key) return;
+                    if (this.sortConfig.key === key) {
+                        this.sortConfig.direction = this.sortConfig.direction === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        this.sortConfig.key = key;
+                        this.sortConfig.direction = 'asc';
+                    }
+                    this.currentPage = 1;
+                    this.render();
+                },
+                
+                handleFilterChange() {
+                    this.currentPage = 1;
+                    this.render();
+                },
+
+                render() {
+                    this.applyFiltersAndSort();
+                    this.renderTable();
+                    this.renderPagination();
+                    this.renderLocationFilters();
+                },
+
+                applyFiltersAndSort() {
+                    const searchTerm = document.getElementById('search').value.toLowerCase();
+                    const minQty = parseInt(document.getElementById('minQty').value, 10) || 0;
+                    const maxQty = parseInt(document.getElementById('maxQty').value, 10) || Infinity;
+                    const startDate = document.getElementById('startDate').value;
+                    const endDate = document.getElementById('endDate').value;
+                    const selectedLocations = Array.from(document.querySelectorAll('#locationFilters input:checked')).map(cb => cb.value);
+
+                    this.filteredInventory = this.inventory.filter(item => {
+                        const itemDate = new Date(item.dateAdded);
+                        const start = startDate ? new Date(startDate) : null;
+                        const end = endDate ? new Date(endDate) : null;
+                        if(end) end.setHours(23, 59, 59, 999);
+
+                        return item.name.toLowerCase().includes(searchTerm) &&
+                            item.quantity >= minQty && item.quantity <= maxQty &&
+                            (!start || itemDate >= start) && (!end || itemDate <= end) &&
+                            (selectedLocations.length === 0 || selectedLocations.includes(item.location));
+                    });
+
+                    this.filteredInventory.sort((a, b) => {
+                        const aVal = a[this.sortConfig.key];
+                        const bVal = b[this.sortConfig.key];
+                        let comparison = (aVal > bVal) ? 1 : (aVal < bVal) ? -1 : 0;
+                        return this.sortConfig.direction === 'asc' ? comparison : -comparison;
+                    });
+                },
+
+                renderTable() {
+                    this.tableBody.innerHTML = '';
+                    const pageItems = this.filteredInventory.slice((this.currentPage - 1) * this.itemsPerPage, this.currentPage * this.itemsPerPage);
+                    this.noResultsDiv.classList.toggle('hidden', pageItems.length > 0);
+                    
+                    pageItems.forEach(item => {
+                        const row = document.createElement('tr');
+                        row.className = 'border-b border-secondary-light dark:border-tertiary-dark';
+                        row.innerHTML = `
+                            <td class="p-4">${item.name}</td> <td class="p-4">${item.quantity}</td>
+                            <td class="p-4">${item.location}</td> <td class="p-4">${new Date(item.dateAdded).toLocaleDateString()}</td>
+                            <td class="p-4 whitespace-nowrap">
+                                <button class="edit-btn p-2 text-tertiary-dark dark:text-tertiary-light hover:text-primary-dark dark:hover:text-primary-light" data-id="${item.id}" title="Edit">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg>
+                                </button>
+                                <button class="delete-btn p-2 text-error hover:text-red-700" data-id="${item.id}" title="Delete">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
+                                </button>
+                            </td>`;
+                        this.tableBody.appendChild(row);
+                    });
+                },
+
+                renderPagination() {
+                    const totalPages = Math.ceil(this.filteredInventory.length / this.itemsPerPage);
+                    this.paginationContainer.innerHTML = '';
+                    if (totalPages <= 1) return;
+                    // Pagination logic here...
+                },
+
+                renderLocationFilters() {
+                    const locations = [...new Set(this.inventory.map(item => item.location))].sort();
+                    this.locationFiltersContainer.innerHTML = locations.map(location => `
+                        <div><input type="checkbox" value="${location}" id="loc-${location}"><label for="loc-${location}" class="ml-2">${location}</label></div>
+                    `).join('');
+                }
+            };
+            inventoryApp.init();
+        });
+    </script>
+
+    <script type="module">
+        import { CreateMLCEngine } from "https://esm.run/@mlc-ai/web-llm";
+
+        window.scannerApp = {
+            engine: null, stream: null, inventoryApp: null,
+
+            init(inventoryApp) {
+                this.inventoryApp = inventoryApp;
+                this.initLLM();
+            },
+
+            async initLLM() {
+                this.inventoryApp.statusEl.textContent = 'Initializing LLM...';
+                this.inventoryApp.captureBtn.disabled = true;
+                const initProgressCallback = (progress) => {
+                    this.inventoryApp.statusEl.textContent = `Loading model: ${progress.text}`;
+                };
+                this.engine = await CreateMLCEngine("gemma-2-2b-it-q4f16_1-MLC", { initProgressCallback });
+                this.inventoryApp.captureBtn.disabled = false;
+                this.inventoryApp.captureBtn.textContent = 'Capture Image';
+                this.inventoryApp.statusEl.textContent = 'LLM Ready.';
+            },
+
+            async startScan() {
+                this.inventoryApp.openModal(this.inventoryApp.scanModal);
+                this.inventoryApp.video.classList.remove('hidden');
+                this.inventoryApp.canvas.classList.add('hidden');
+                try {
+                    this.inventoryApp.statusEl.textContent = 'Requesting camera...';
+                    this.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                    this.inventoryApp.video.srcObject = this.stream;
+                    this.inventoryApp.statusEl.textContent = 'Camera active.';
+                } catch (err) {
+                    this.inventoryApp.statusEl.textContent = 'Camera error.';
+                    console.error(err);
+                }
+            },
+
+            stopScan() {
+                if (this.stream) {
+                    this.stream.getTracks().forEach(track => track.stop());
+                    this.stream = null;
+                }
+                this.inventoryApp.closeModal(this.inventoryApp.scanModal);
+            },
+
+            capture() {
+                if (!this.stream) return;
+                const context = this.inventoryApp.canvas.getContext('2d');
+                this.inventoryApp.canvas.width = this.inventoryApp.video.videoWidth;
+                this.inventoryApp.canvas.height = this.inventoryApp.video.videoHeight;
+                context.drawImage(this.inventoryApp.video, 0, 0);
+                this.stopScan();
+                this.performOCR(this.inventoryApp.canvas);
+            },
+
+            async performOCR(canvas) {
+                this.inventoryApp.statusEl.textContent = 'Recognizing text...';
+                const worker = await Tesseract.createWorker('eng', 1, { logger: m => {
+                    if (m.status === 'recognizing text') this.inventoryApp.statusEl.textContent = `Recognizing... ${Math.round(m.progress * 100)}%`;
+                }});
+                const { data: { text } } = await worker.recognize(canvas);
+                await worker.terminate();
+                this.parseTextWithLLM(text);
+            },
+
+            async parseTextWithLLM(ocrText) {
+                this.inventoryApp.statusEl.textContent = 'LLM is parsing...';
+                const prompt = `You are an inventory parsing assistant. Analyze the following product text and extract the Product Name and the total Quantity. If a field is not present, use 'null'. RETURN ONLY a single JSON object in the following format: {"productName": "...", "quantity": "..."}
+
+Product Text: ${ocrText}`;
+                try {
+                    const reply = await this.engine.chat.completions.create({ messages: [{ role: "user", content: prompt }], temperature: 0.1 });
+                    let jsonResponse = reply.choices[0].message.content;
+                    const jsonMatch = jsonResponse.match(/\`\`\`json\n([\s\S]*?)\`\`\`/);
+                    if (jsonMatch && jsonMatch[1]) jsonResponse = jsonMatch[1];
+                    const parsedData = JSON.parse(jsonResponse);
+                    
+                    this.inventoryApp.closeModal(this.inventoryApp.scanModal);
+                    this.inventoryApp.openItemForm();
+                    document.getElementById('itemName').value = parsedData.productName || '';
+                    document.getElementById('itemQuantity').value = parsedData.quantity || '';
+                } catch (err) {
+                    console.error('LLM Error:', err);
+                    this.inventoryApp.statusEl.textContent = 'LLM parsing failed.';
+                }
+            }
+        };
+    </script>
+</body>
+</html>
