@@ -6,6 +6,7 @@
     <title>Smart Pantry Scan</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/@zxing/library@latest/umd/index.min.js"></script>
     <style>
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #dbf6fa; }
@@ -46,15 +47,25 @@
         <div class="max-w-7xl mx-auto">
             <!-- Header -->
             <header class="flex justify-between items-center mb-6">
-                <h1 class="text-2xl sm:text-3xl font-bold text-primary-dark dark:text-primary-light">InventoryPro</h1>
+                <h1 class="text-2xl sm:text-3xl font-bold text-primary-dark dark:text-primary-light">Smart Pantry Scan</h1>
                 <div class="flex items-center space-x-2 sm:space-x-4">
                     <button id="scanItemBtn" class="flex items-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-300 custom-focus-ring">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                        <span class="hidden sm:inline">Scan Item</span>
+                        <span class="hidden sm:inline">Scan Label</span>
+                    </button>
+                    <button id="scanBarcodeBtn" class="flex items-center bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-300 custom-focus-ring">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M2 6h2v12H2V6zm3 0h1v12H5V6zm2 0h2v12H7V6zm3 0h1v12h-1V6zm2 0h2v12h-2V6zm3 0h1v12h-1V6zm2 0h3v12h-3V6z"/>
+                        </svg>
+                        <span class="hidden sm:inline">Scan Barcode</span>
                     </button>
                     <button id="addItemBtn" class="flex items-center bg-primary-dark hover:bg-tertiary-dark text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-300 custom-focus-ring">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
                         <span class="hidden sm:inline">Add Manually</span>
+                    </button>
+                    <button id="deleteSelectedBtn" class="flex items-center bg-error hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-300 custom-focus-ring" disabled>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
+                        <span class="hidden sm:inline">Delete Selected</span>
                     </button>
                     <button id="theme-toggle" class="p-2 rounded-full bg-secondary-light dark:bg-tertiary-dark text-primary-dark dark:text-primary-light custom-focus-ring transition-colors duration-300">
                         <svg id="theme-icon-light" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
@@ -104,10 +115,12 @@
                     <table class="w-full min-w-[640px]">
                         <thead class="bg-secondary-light dark:bg-tertiary-dark">
                             <tr>
+                                <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider"><input type="checkbox" id="selectAllCheckbox" class="h-4 w-4 text-primary-dark focus:ring-primary-dark border-gray-300 rounded"></th>
                                 <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider cursor-pointer" data-sort="name">Name</th>
                                 <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider cursor-pointer" data-sort="quantity">Quantity</th>
                                 <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider cursor-pointer" data-sort="location">Location</th>
-                                <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider cursor-pointer" data-sort="dateAdded">Date Added</th>
+                                <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider cursor-pointer" data-sort="dateAdded">Added</th>
+                                <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider cursor-pointer" data-sort="spoilage">Spoilage in</th>
                                 <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
@@ -136,12 +149,32 @@
                     <input type="text" id="itemName" required class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
                 </div>
                 <div class="mb-4">
-                    <label for="itemQuantity" class="block text-sm font-medium mb-1">Quantity</label>
-                    <input type="number" id="itemQuantity" required min="0" class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
+                    <label for="itemQuantityNumeric" class="block text-sm font-medium mb-1">Quantity</label>
+                    <input type="number" id="itemQuantityNumeric" required min="0" class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
                 </div>
-                <div class="mb-6">
+                <div class="mb-4">
+                    <label for="itemUnit" class="block text-sm font-medium mb-1">Unit</label>
+                    <input type="text" id="itemUnit" class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
+                </div>
+                <div class="mb-4 flex items-center">
+                    <input type="checkbox" id="isDiscrete" class="mr-2 h-4 w-4 text-primary-dark focus:ring-primary-dark border-gray-300 rounded">
+                    <label for="isDiscrete" class="text-sm font-medium">Is Discrete Item (e.g., 6 bananas, not 1L milk)</label>
+                </div>
+                <div id="remainingQuantitySliderContainer" class="mb-4" style="display: none;">
+                    <label for="remainingRatio" class="block text-sm font-medium mb-1">Amount Remaining: <span id="remainingRatioValue">100%</span></label>
+                    <input type="range" id="remainingRatio" min="0" max="100" value="100" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700">
+                </div>
+                <div class="mb-4">
                     <label for="itemLocation" class="block text-sm font-medium mb-1">Storage Location</label>
                     <input type="text" id="itemLocation" placeholder="e.g., Pantry" required class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
+                </div>
+                <div class="mb-4">
+                    <label for="dateAddedInput" class="block text-sm font-medium mb-1">Date Added</label>
+                    <input type="date" id="dateAddedInput" required class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
+                </div>
+                <div class="mb-6">
+                    <label for="perishableDaysInput" class="block text-sm font-medium mb-1">Perishable (days)</label>
+                    <input type="number" id="perishableDaysInput" min="0" class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
                 </div>
                 <div class="flex justify-end space-x-4">
                     <button type="button" id="cancelBtn" class="py-2 px-4 rounded-lg bg-neutral-light dark:bg-neutral-dark">Cancel</button>
@@ -181,6 +214,22 @@
         </div>
     </div>
 
+    <!-- Barcode Scan Modal -->
+    <div id="barcodeScanModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-primary-light dark:bg-secondary-dark rounded-lg shadow-xl w-full max-w-2xl p-6 modal-enter space-y-4">
+            <h2 class="text-2xl font-bold text-primary-dark dark:text-primary-light">Scan Barcode</h2>
+            <div class="bg-gray-900 rounded-lg flex justify-center items-center relative">
+                <video id="barcodeVideo" class="w-full"></video>
+            </div>
+            <div id="barcode-status-container" class="p-4 rounded-lg text-center bg-white dark:bg-tertiary-dark">
+                <p id="barcodeStatus" class="font-medium">Searching for barcode...</p>
+            </div>
+            <div class="flex justify-center">
+                <button type="button" id="cancelBarcodeScanBtn" class="py-2 px-4 rounded-lg bg-neutral-light dark:bg-neutral-dark">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const inventoryApp = {
@@ -190,6 +239,7 @@
                 itemsPerPage: 10,
                 sortConfig: { key: 'dateAdded', direction: 'desc' },
                 itemToDeleteId: null,
+                selectedItems: [],
 
                 init() {
                     this.initDOMElements();
@@ -198,20 +248,28 @@
                     this.addEventListeners();
                     this.render();
                     window.scannerApp.init(this);
+                    window.barcodeScannerApp.init(this);
                 },
 
                 initDOMElements() {
                     this.themeToggle = document.getElementById('theme-toggle');
                     this.addItemBtn = document.getElementById('addItemBtn');
                     this.scanItemBtn = document.getElementById('scanItemBtn');
+                    this.scanBarcodeBtn = document.getElementById('scanBarcodeBtn');
                     this.itemModal = document.getElementById('itemModal');
                     this.scanModal = document.getElementById('scanModal');
+                    this.barcodeScanModal = document.getElementById('barcodeScanModal');
                     this.confirmModal = document.getElementById('confirmModal');
                     this.cancelBtn = document.getElementById('cancelBtn');
                     this.cancelScanBtn = document.getElementById('cancelScanBtn');
+                    this.cancelBarcodeScanBtn = document.getElementById('cancelBarcodeScanBtn');
                     this.confirmCancelBtn = document.getElementById('confirmCancelBtn');
                     this.confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+                    this.selectAllCheckbox = document.getElementById('selectAllCheckbox');
+                    this.deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
                     this.itemForm = document.getElementById('itemForm');
+                    this.itemQuantityNumeric = document.getElementById('itemQuantityNumeric');
+                    this.itemUnit = document.getElementById('itemUnit');
                     this.tableBody = document.getElementById('inventory-table-body');
                     this.paginationContainer = document.getElementById('pagination');
                     this.filterInputs = document.querySelectorAll('#filters input, #filters select');
@@ -221,23 +279,43 @@
                     this.statusEl = document.getElementById('status');
                     this.video = document.getElementById('video');
                     this.canvas = document.getElementById('canvas');
+                    this.barcodeVideo = document.getElementById('barcodeVideo');
+                    this.barcodeStatusEl = document.getElementById('barcodeStatus');
+                    this.isDiscrete = document.getElementById('isDiscrete');
+                    this.remainingQuantitySliderContainer = document.getElementById('remainingQuantitySliderContainer');
+                    this.remainingRatio = document.getElementById('remainingRatio');
+                    this.remainingRatioValue = document.getElementById('remainingRatioValue');
+                    this.dateAddedInput = document.getElementById('dateAddedInput');
+                    this.perishableDaysInput = document.getElementById('perishableDaysInput');
                 },
 
                 addEventListeners() {
                     this.themeToggle.addEventListener('click', () => this.toggleTheme());
                     this.addItemBtn.addEventListener('click', () => this.openItemForm());
                     this.scanItemBtn.addEventListener('click', () => window.scannerApp.startScan());
+                    this.scanBarcodeBtn.addEventListener('click', () => window.barcodeScannerApp.startScan());
                     this.cancelBtn.addEventListener('click', () => this.closeModal(this.itemModal));
                     this.cancelScanBtn.addEventListener('click', () => window.scannerApp.stopScan());
+                    this.cancelBarcodeScanBtn.addEventListener('click', () => window.barcodeScannerApp.stopScan());
                     this.captureBtn.addEventListener('click', () => window.scannerApp.capture());
                     this.itemForm.addEventListener('submit', (e) => this.handleFormSubmit(e));
                     this.confirmCancelBtn.addEventListener('click', () => this.closeModal(this.confirmModal));
                     this.confirmDeleteBtn.addEventListener('click', () => this.handleDelete());
+                    this.selectAllCheckbox.addEventListener('change', (e) => this.toggleAllCheckboxes(e.target.checked));
+                    this.deleteSelectedBtn.addEventListener('click', () => this.openConfirmDeleteSelectedModal());
                     this.tableBody.addEventListener('click', (e) => this.handleTableActions(e));
                     this.paginationContainer.addEventListener('click', (e) => this.handlePaginationClick(e));
                     document.querySelector('thead').addEventListener('click', (e) => this.handleSort(e));
                     this.filterInputs.forEach(input => input.addEventListener('input', () => this.handleFilterChange()));
                     this.locationFiltersContainer.addEventListener('change', () => this.handleFilterChange());
+
+                    // New event listeners for remaining quantity slider
+                    this.isDiscrete.addEventListener('change', () => {
+                        this.remainingQuantitySliderContainer.style.display = this.isDiscrete.checked ? 'none' : 'block';
+                    });
+                    this.remainingRatio.addEventListener('input', () => {
+                        this.remainingRatioValue.textContent = `${this.remainingRatio.value}%`;
+                    });
                 },
                 
                 loadTheme() {
@@ -255,7 +333,23 @@
 
                 loadInventory() {
                     const stored = localStorage.getItem('inventory');
-                    this.inventory = stored ? JSON.parse(stored) : [];
+                    if (stored) {
+                        this.inventory = JSON.parse(stored);
+                    } else {
+                        // Default food-related inventory items
+                        this.inventory = [
+                            { id: 1, name: 'Milk', quantity: 1, unit: 'Liter', isDiscrete: false, remainingRatio: 0.75, location: 'Refrigerator', dateAdded: '2025-09-28T10:00:00Z', perishableDays: 7 },
+                            { id: 2, name: 'Bananas', quantity: 6, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Counter', dateAdded: '2025-09-29T11:30:00Z', perishableDays: 5 },
+                            { id: 3, name: 'Canned Tomatoes', quantity: 2, unit: 'cans', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-09-25T14:00:00Z', perishableDays: 365 },
+                            { id: 4, name: 'Eggs', quantity: 12, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Refrigerator', dateAdded: '2025-09-20T09:00:00Z', perishableDays: 21 },
+                            { id: 5, name: 'Bread', quantity: 1, unit: 'loaf', isDiscrete: false, remainingRatio: 0.5, location: 'Pantry', dateAdded: '2025-09-30T16:00:00Z', perishableDays: 7 },
+                            { id: 6, name: 'Yogurt', quantity: 4, unit: 'cups', isDiscrete: true, remainingRatio: 1, location: 'Refrigerator', dateAdded: '2025-09-27T08:00:00Z', perishableDays: 14 },
+                            { id: 7, name: 'Coffee Beans', quantity: 500, unit: 'grams', isDiscrete: false, remainingRatio: 0.8, location: 'Pantry', dateAdded: '2025-09-26T13:00:00Z', perishableDays: 90 },
+                            { id: 8, name: 'Apples', quantity: 5, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Counter', dateAdded: '2025-09-24T10:00:00Z', perishableDays: 14 },
+                            { id: 9, name: 'Cheese', quantity: 200, unit: 'grams', isDiscrete: false, remainingRatio: 0.6, location: 'Refrigerator', dateAdded: '2025-09-23T15:00:00Z', perishableDays: 30 },
+                            { id: 10, name: 'Pasta', quantity: 1, unit: 'box', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-09-22T12:00:00Z', perishableDays: 730 },
+                        ];
+                    }
                 },
 
                 saveInventory() {
@@ -279,8 +373,23 @@
                     itemIdInput.value = item ? item.id : '';
                     if (item) {
                         document.getElementById('itemName').value = item.name;
-                        document.getElementById('itemQuantity').value = item.quantity;
+                        document.getElementById('itemQuantityNumeric').value = item.quantity;
+                        document.getElementById('itemUnit').value = item.unit || '';
                         document.getElementById('itemLocation').value = item.location;
+                        document.getElementById('isDiscrete').checked = item.isDiscrete || false;
+                        // Set slider value and visibility
+                        this.remainingRatio.value = (item.remainingRatio !== undefined) ? (item.remainingRatio * 100) : 100;
+                        this.remainingRatioValue.textContent = `${this.remainingRatio.value}%`;
+                        this.remainingQuantitySliderContainer.style.display = item.isDiscrete ? 'none' : 'block';
+                        this.dateAddedInput.value = item.dateAdded ? item.dateAdded.split('T')[0] : '';
+                        this.perishableDaysInput.value = item.perishableDays || '';
+                    } else {
+                        // For new items, ensure slider is visible and set to 100% by default
+                        this.remainingRatio.value = 100;
+                        this.remainingRatioValue.textContent = '100%';
+                        this.remainingQuantitySliderContainer.style.display = 'block';
+                        this.dateAddedInput.valueAsDate = new Date(); // Default to current date for new item
+                        this.perishableDaysInput.value = ''; // Clear for new item, LLM will suggest
                     }
                     this.openModal(this.itemModal);
                 },
@@ -295,8 +404,13 @@
                     const id = document.getElementById('itemId').value;
                     const newItem = {
                         name: document.getElementById('itemName').value,
-                        quantity: parseInt(document.getElementById('itemQuantity').value, 10),
+                        quantity: parseInt(document.getElementById('itemQuantityNumeric').value, 10),
+                        unit: document.getElementById('itemUnit').value,
+                        isDiscrete: document.getElementById('isDiscrete').checked,
+                        remainingRatio: document.getElementById('isDiscrete').checked ? 1 : (parseInt(document.getElementById('remainingRatio').value, 10) / 100),
                         location: document.getElementById('itemLocation').value,
+                        dateAdded: new Date(document.getElementById('dateAddedInput').value).toISOString(),
+                        perishableDays: parseInt(document.getElementById('perishableDaysInput').value, 10) || null,
                     };
                     if (id) {
                         const index = this.inventory.findIndex(item => item.id == id);
@@ -327,6 +441,10 @@
                     const deleteBtn = e.target.closest('.delete-btn');
                     if (deleteBtn) {
                         this.openConfirmModal(parseInt(deleteBtn.dataset.id, 10));
+                    }
+                    const itemCheckbox = e.target.closest('.item-checkbox');
+                    if (itemCheckbox) {
+                        this.handleItemCheckboxChange(parseInt(itemCheckbox.dataset.id, 10), itemCheckbox.checked);
                     }
                 },
                 
@@ -384,8 +502,18 @@
                     });
 
                     this.filteredInventory.sort((a, b) => {
-                        const aVal = a[this.sortConfig.key];
-                        const bVal = b[this.sortConfig.key];
+                        let aVal, bVal;
+
+                        if (this.sortConfig.key === 'spoilage') {
+                            const aDaysSinceAdded = Math.floor((new Date() - new Date(a.dateAdded)) / (1000 * 60 * 60 * 24));
+                            const bDaysSinceAdded = Math.floor((new Date() - new Date(b.dateAdded)) / (1000 * 60 * 60 * 24));
+                            aVal = a.perishableDays !== null && a.perishableDays !== undefined ? (a.perishableDays - aDaysSinceAdded) : Infinity; // Treat N/A as very far away
+                            bVal = b.perishableDays !== null && b.perishableDays !== undefined ? (b.perishableDays - bDaysSinceAdded) : Infinity;
+                        } else {
+                            aVal = a[this.sortConfig.key];
+                            bVal = b[this.sortConfig.key];
+                        }
+                        
                         let comparison = (aVal > bVal) ? 1 : (aVal < bVal) ? -1 : 0;
                         return this.sortConfig.direction === 'asc' ? comparison : -comparison;
                     });
@@ -399,9 +527,29 @@
                     pageItems.forEach(item => {
                         const row = document.createElement('tr');
                         row.className = 'border-b border-secondary-light dark:border-tertiary-dark';
+                        const isSelected = this.selectedItems.includes(item.id);
+                        const daysSinceAdded = Math.floor((new Date() - new Date(item.dateAdded)) / (1000 * 60 * 60 * 24));
+                        const daysRemaining = item.perishableDays !== null && item.perishableDays !== undefined ? (item.perishableDays - daysSinceAdded) : null;
+                        let expiryText = '';
+                        if (daysRemaining !== null) {
+                            if (daysRemaining <= 0) {
+                                expiryText = '<span class="text-red-500 font-bold">Expired!</span>';
+                            } else if (daysRemaining <= 3) {
+                                expiryText = `<span class="text-orange-500 font-bold">${daysRemaining} days left</span>`;
+                            } else {
+                                expiryText = `${daysRemaining} days left`;
+                            }
+                        } else {
+                            expiryText = 'N/A';
+                        }
+
                         row.innerHTML = `
-                            <td class="p-4">${item.name}</td> <td class="p-4">${item.quantity}</td>
-                            <td class="p-4">${item.location}</td> <td class="p-4">${new Date(item.dateAdded).toLocaleDateString()}</td>
+                            <td class="p-4"><input type="checkbox" class="item-checkbox h-4 w-4 text-primary-dark focus:ring-primary-dark border-gray-300 rounded" data-id="${item.id}" ${isSelected ? 'checked' : ''}></td>
+                            <td class="p-4">${item.name}</td>
+                            <td class="p-4">${item.quantity} ${item.unit || ''}</td>
+                            <td class="p-4">${item.location}</td>
+                            <td class="p-4">${daysSinceAdded} days ago</td>
+                            <td class="p-4">${expiryText}</td>
                             <td class="p-4 whitespace-nowrap">
                                 <button class="edit-btn p-2 text-tertiary-dark dark:text-tertiary-light hover:text-primary-dark dark:hover:text-primary-light" data-id="${item.id}" title="Edit">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg>
@@ -426,8 +574,157 @@
                     this.locationFiltersContainer.innerHTML = locations.map(location => `
                         <div><input type="checkbox" value="${location}" id="loc-${location}"><label for="loc-${location}" class="ml-2">${location}</label></div>
                     `).join('');
+                },
+
+                // New functions for multi-select and mass delete
+                toggleAllCheckboxes(checked) {
+                    const checkboxes = document.querySelectorAll('.item-checkbox');
+                    checkboxes.forEach(checkbox => {
+                        checkbox.checked = checked;
+                        this.handleItemCheckboxChange(parseInt(checkbox.dataset.id, 10), checked);
+                    });
+                },
+
+                handleItemCheckboxChange(itemId, checked) {
+                    if (checked) {
+                        if (!this.selectedItems.includes(itemId)) {
+                            this.selectedItems.push(itemId);
+                        }
+                    } else {
+                        this.selectedItems = this.selectedItems.filter(id => id !== itemId);
+                    }
+                    this.updateDeleteButtonState();
+                    // Update 'Select All' checkbox state
+                    const allCheckboxes = document.querySelectorAll('.item-checkbox');
+                    const allChecked = allCheckboxes.length > 0 && Array.from(allCheckboxes).every(cb => cb.checked);
+                    this.selectAllCheckbox.checked = allChecked;
+                },
+
+                updateDeleteButtonState() {
+                    this.deleteSelectedBtn.disabled = this.selectedItems.length === 0;
+                },
+
+                openConfirmDeleteSelectedModal() {
+                    if (this.selectedItems.length > 0) {
+                        this.openModal(this.confirmModal);
+                        document.getElementById('modalTitle').textContent = `Delete ${this.selectedItems.length} Items`;
+                        document.querySelector('#confirmModal p').textContent = `Are you sure you want to delete ${this.selectedItems.length} selected items? This action cannot be undone.`;
+                        // Temporarily hijack confirmDeleteBtn for mass delete
+                        this.confirmDeleteBtn.onclick = () => this.deleteSelectedItems();
+                    }
+                },
+
+                deleteSelectedItems() {
+                    this.inventory = this.inventory.filter(item => !this.selectedItems.includes(item.id));
+                    this.selectedItems = []; // Clear selections
+                    this.saveInventory();
+                    this.render();
+                    this.closeModal(this.confirmModal);
+                    this.updateDeleteButtonState();
+                    this.selectAllCheckbox.checked = false; // Deselect 'Select All'
                 }
             };
+
+            const barcodeScannerApp = {
+                inventoryApp: null,
+                codeReader: null,
+
+                init(inventoryApp) {
+                    this.inventoryApp = inventoryApp;
+                    this.codeReader = new ZXing.BrowserMultiFormatReader();
+                },
+
+                async startScan() {
+                    const videoElement = document.getElementById('barcodeVideo');
+                    const modal = document.getElementById('barcodeScanModal');
+                    const statusEl = document.getElementById('barcodeStatus');
+
+                    this.inventoryApp.openModal(modal);
+                    statusEl.textContent = 'Requesting camera access...';
+
+                    try {
+                        this.codeReader.decodeFromVideoDevice(undefined, videoElement, (result, err) => {
+                            if (result) {
+                                statusEl.textContent = `Found barcode: ${result.getText()}`;
+                                this.fetchData(result.getText());
+                                this.stopScan();
+                            }
+                            if (err && !(err instanceof ZXing.NotFoundException)) {
+                                console.error(err);
+                                statusEl.textContent = `Error: ${err}`;
+                            }
+                        });
+                        statusEl.textContent = 'Searching for barcode...';
+                    } catch (err) {
+                        console.error('Camera Error:', err);
+                        statusEl.textContent = 'Camera access denied or not available.';
+                    }
+                },
+
+                stopScan() {
+                    this.codeReader.reset();
+                    this.inventoryApp.closeModal(document.getElementById('barcodeScanModal'));
+                },
+
+                async fetchData(barcode) {
+                    const statusEl = document.getElementById('barcodeStatus');
+                    statusEl.textContent = `Fetching data for ${barcode}...`;
+                    const apiUrl = `https://world.openfoodfacts.net/api/v2/product/${barcode}?fields=product_name,quantity,image_front_url`;
+
+                    try {
+                        const response = await fetch(apiUrl);
+                        const data = await response.json();
+                        console.log('Open Food Facts API Response:', data);
+
+                        if (data.status === 1 && data.product && data.product.product_name) {
+                            const rawQuantity = data.product.quantity || '';
+                            const llmPrompt = `Parse the following product quantity string into a numeric quantity and its unit. If no unit is specified, use 'units'. If no numeric quantity is found, use 1. Return ONLY a single JSON object in the format: {"quantity": <number>, "unit": "<string>"}\n\nQuantity String: ${rawQuantity}`;
+
+                            try {
+                                const reply = await window.scannerApp.engine.chat.completions.create({ messages: [{ role: "user", content: llmPrompt }], temperature: 0.1 });
+                                let jsonResponse = reply.choices[0].message.content;
+                                const jsonMatch = jsonResponse.match(/\`\`\`json\n([\s\S]*?)\`\`\`/);
+                                if (jsonMatch && jsonMatch[1]) jsonResponse = jsonMatch[1];
+                                const parsedQuantity = JSON.parse(jsonResponse);
+
+                                this.inventoryApp.openItemForm();
+                                document.getElementById('itemName').value = data.product.product_name || '';
+                                document.getElementById('itemQuantityNumeric').value = parsedQuantity.quantity || 1;
+                                document.getElementById('itemUnit').value = parsedQuantity.unit || '';
+                                console.log('Product Image URL:', data.product.image_front_url);
+
+                                // LLM call to suggest perishable days
+                                const perishablePrompt = `Suggest a typical shelf life in days for "${data.product.product_name}". Return ONLY a single number. If unsure, return 7.`;
+                                try {
+                                    const perishableReply = await window.scannerApp.engine.chat.completions.create({ messages: [{ role: "user", content: perishablePrompt }], temperature: 0.1 });
+                                    const suggestedDays = parseInt(perishableReply.choices[0].message.content, 10);
+                                    document.getElementById('perishableDaysInput').value = isNaN(suggestedDays) ? 7 : suggestedDays;
+                                } catch (perishableLlmError) {
+                                    console.error('LLM Perishable Days Suggestion Error:', perishableLlmError);
+                                    document.getElementById('perishableDaysInput').value = 7; // Default if LLM fails
+                                }
+
+                            } catch (llmError) {
+                                console.error('LLM Quantity Parsing Error:', llmError);
+                                // Fallback if LLM parsing fails
+                                this.inventoryApp.openItemForm();
+                                document.getElementById('itemName').value = data.product.product_name || '';
+                                document.getElementById('itemQuantityNumeric').value = 1; // Default to 1
+                                document.getElementById('itemUnit').value = ''; // Default to empty unit
+                                console.log('Product Image URL:', data.product.image_front_url);
+                                alert('Failed to parse quantity with LLM. Defaulting to 1 unit.');
+                            }
+                        } else {
+                            alert(`Product not found for barcode: ${barcode}`);
+                        }
+                    } catch (err) {
+                        console.error('API Error:', err);
+                        alert('Failed to fetch product data.');
+                    }
+                }
+            };
+
+            window.barcodeScannerApp = barcodeScannerApp;
             inventoryApp.init();
         });
     </script>
@@ -494,6 +791,9 @@
                     if (m.status === 'recognizing text') this.inventoryApp.statusEl.textContent = `Recognizing... ${Math.round(m.progress * 100)}%`;
                 }});
                 const { data: { text } } = await worker.recognize(canvas);
+                console.log('--- OCR Text Result ---');
+                console.log(text);
+                console.log('-----------------------');
                 await worker.terminate();
                 this.parseTextWithLLM(text);
             },
