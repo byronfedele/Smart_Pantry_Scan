@@ -175,7 +175,8 @@
                 </div>
                 <div class="mb-4">
                     <label for="itemLocation" class="block text-sm font-medium mb-1">Storage Location</label>
-                    <input type="text" id="itemLocation" placeholder="e.g., Pantry" required class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
+                    <input type="text" id="itemLocation" placeholder="e.g., Pantry" required class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring" list="location-list">
+                    <datalist id="location-list"></datalist>
                 </div>
                 <div class="mb-4">
                     <label for="dateAddedInput" class="block text-sm font-medium mb-1">Date Added</label>
@@ -301,6 +302,7 @@
                     this.paginationContainer = document.getElementById('pagination');
                     this.filterInputs = document.querySelectorAll('#filters input, #filters select');
                     this.locationFiltersContainer = document.getElementById('locationFilters');
+                    this.locationDatalist = document.getElementById('location-list');
                     this.noResultsDiv = document.getElementById('no-results');
                     this.captureBtn = document.getElementById('captureBtn');
                     this.statusEl = document.getElementById('status');
@@ -516,6 +518,7 @@
                     this.renderTable();
                     this.renderPagination();
                     this.renderLocationFilters();
+                    this.renderLocationDatalist();
                 },
 
                 applyFiltersAndSort() {
@@ -611,6 +614,11 @@
                     this.locationFiltersContainer.innerHTML = locations.map(location => `
                         <div><input type="checkbox" value="${location}" id="loc-${location}"><label for="loc-${location}" class="ml-2">${location}</label></div>
                     `).join('');
+                },
+
+                renderLocationDatalist() {
+                    const locations = [...new Set(this.inventory.map(item => item.location))];
+                    this.locationDatalist.innerHTML = locations.map(location => `<option value="${location}"></option>`).join('');
                 },
 
                 // New functions for multi-select and mass delete
