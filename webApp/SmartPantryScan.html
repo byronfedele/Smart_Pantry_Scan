@@ -152,6 +152,7 @@
             <h2 id="modalTitle" class="text-2xl font-bold mb-4 text-primary-dark dark:text-primary-light">Add New Item</h2>
             <form id="itemForm">
                 <input type="hidden" id="itemId">
+                <input type="hidden" id="itemBarcode">
                 <div class="mb-4">
                     <label for="itemName" class="block text-sm font-medium mb-1">Item Name</label>
                     <input type="text" id="itemName" required class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
@@ -189,6 +190,20 @@
                     <button type="submit" id="saveBtn" class="py-2 px-6 rounded-lg bg-primary-dark text-white font-bold">Save</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Interaction Modal -->
+    <div id="interactionModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-primary-light dark:bg-secondary-dark rounded-lg shadow-xl w-full max-w-md p-6 modal-enter">
+            <h2 id="interactionModalTitle" class="text-2xl font-bold mb-4 text-primary-dark dark:text-primary-light">Found Matching Items</h2>
+            <div id="interactionList" class="space-y-3 mb-6 max-h-60 overflow-y-auto">
+                <!-- Matching items will be injected here -->
+            </div>
+            <div class="flex justify-between">
+                <button type="button" id="interactionAddNewBtn" class="py-2 px-4 rounded-lg bg-green-600 text-white font-bold">Add as New</button>
+                <button type="button" id="interactionCancelBtn" class="py-2 px-4 rounded-lg bg-neutral-light dark:bg-neutral-dark">Cancel</button>
+            </div>
         </div>
     </div>
 
@@ -271,6 +286,10 @@
                     this.cancelBtn = document.getElementById('cancelBtn');
                     this.cancelScanBtn = document.getElementById('cancelScanBtn');
                     this.cancelBarcodeScanBtn = document.getElementById('cancelBarcodeScanBtn');
+                    this.interactionModal = document.getElementById('interactionModal');
+                    this.interactionList = document.getElementById('interactionList');
+                    this.interactionCancelBtn = document.getElementById('interactionCancelBtn');
+                    this.interactionAddNewBtn = document.getElementById('interactionAddNewBtn');
                     this.confirmCancelBtn = document.getElementById('confirmCancelBtn');
                     this.confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
                     this.selectAllCheckbox = document.getElementById('selectAllCheckbox');
@@ -310,6 +329,9 @@
                     this.cancelBarcodeScanBtn.addEventListener('click', () => window.barcodeScannerApp.stopScan());
                     this.captureBtn.addEventListener('click', () => window.scannerApp.capture());
                     this.itemForm.addEventListener('submit', (e) => this.handleFormSubmit(e));
+                    this.interactionCancelBtn.addEventListener('click', () => this.closeModal(this.interactionModal));
+                    this.interactionAddNewBtn.addEventListener('click', () => this.addNewItemFromInteraction());
+                    this.interactionList.addEventListener('click', (e) => this.handleInteraction(e));
                     this.confirmCancelBtn.addEventListener('click', () => this.closeModal(this.confirmModal));
                     this.confirmDeleteBtn.addEventListener('click', () => this.handleDelete());
                     this.selectAllCheckbox.addEventListener('change', (e) => this.toggleAllCheckboxes(e.target.checked));
@@ -381,7 +403,9 @@
                     this.itemForm.reset();
                     document.getElementById('modalTitle').textContent = item ? 'Edit Item' : 'Add New Item';
                     const itemIdInput = document.getElementById('itemId');
+                    const itemBarcodeInput = document.getElementById('itemBarcode');
                     itemIdInput.value = item ? item.id : '';
+                    itemBarcodeInput.value = item ? item.barcode : '';
                     if (item) {
                         document.getElementById('itemName').value = item.name;
                         document.getElementById('itemQuantityNumeric').value = item.quantity;
@@ -414,6 +438,7 @@
                     e.preventDefault();
                     const id = document.getElementById('itemId').value;
                     const newItem = {
+                        barcode: document.getElementById('itemBarcode').value,
                         name: document.getElementById('itemName').value,
                         quantity: parseInt(document.getElementById('itemQuantityNumeric').value, 10),
                         unit: document.getElementById('itemUnit').value,
@@ -422,6 +447,7 @@
                         location: document.getElementById('itemLocation').value,
                         dateAdded: new Date(document.getElementById('dateAddedInput').value).toISOString(),
                         perishableDays: parseInt(document.getElementById('perishableDaysInput').value, 10) || null,
+                        lastModified: new Date().toISOString(),
                     };
                     if (id) {
                         const index = this.inventory.findIndex(item => item.id == id);
@@ -625,6 +651,75 @@
                     }
                 },
 
+                openInteractionModal(items, barcode) {
+                    this.interactionList.innerHTML = '';
+                    items.forEach(item => {
+                        const daysSinceAdded = Math.floor((new Date() - new Date(item.dateAdded)) / (1000 * 60 * 60 * 24));
+                        const daysRemaining = item.perishableDays !== null && item.perishableDays !== undefined ? (item.perishableDays - daysSinceAdded) : null;
+                        let expiryText = '';
+                        if (daysRemaining !== null) {
+                            if (daysRemaining <= 0) {
+                                expiryText = '<span class="text-red-500 font-bold">Expired!</span>';
+                            } else if (daysRemaining <= 3) {
+                                expiryText = `<span class="text-orange-500 font-bold">${daysRemaining} days left</span>`;
+                            } else {
+                                expiryText = `${daysRemaining} days left`;
+                            }
+                        } else {
+                            expiryText = 'N/A';
+                        }
+
+                        const itemElement = document.createElement('div');
+                        itemElement.className = 'p-3 bg-white dark:bg-tertiary-dark rounded-lg flex justify-between items-center';
+                        itemElement.innerHTML = `
+                            <div>
+                                <p class="font-semibold">${item.name}</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Added: ${daysSinceAdded} days ago | Spoilage: ${expiryText}</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Modified: ${new Date(item.lastModified).toLocaleString()}</p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="edit-item-btn p-2 text-blue-600 hover:text-blue-800" data-id="${item.id}" title="Edit">Edit</button>
+                                <button class="delete-item-btn p-2 text-red-600 hover:text-red-800" data-id="${item.id}" title="Delete">Delete</button>
+                            </div>
+                        `;
+                        this.interactionList.appendChild(itemElement);
+                    });
+                    this.interactionAddNewBtn.dataset.barcode = barcode;
+                    this.openModal(this.interactionModal);
+                },
+
+                handleInteraction(e) {
+                    const editBtn = e.target.closest('.edit-item-btn');
+                    if (editBtn) {
+                        this.editItem(parseInt(editBtn.dataset.id, 10));
+                    }
+                    const deleteBtn = e.target.closest('.delete-item-btn');
+                    if (deleteBtn) {
+                        this.deleteItem(parseInt(deleteBtn.dataset.id, 10));
+                    }
+                },
+
+                deleteItem(id) {
+                    this.inventory = this.inventory.filter(item => item.id !== id);
+                    this.saveInventory();
+                    this.render();
+                    this.closeModal(this.interactionModal);
+                },
+
+                editItem(id) {
+                    const item = this.inventory.find(i => i.id === id);
+                    if (item) {
+                        this.closeModal(this.interactionModal);
+                        this.openItemForm(item);
+                    }
+                },
+
+                addNewItemFromInteraction() {
+                    const barcode = this.interactionAddNewBtn.dataset.barcode;
+                    this.closeModal(this.interactionModal);
+                    window.barcodeScannerApp.fetchAndOpenForm(barcode);
+                },
+
                 deleteSelectedItems() {
                     this.inventory = this.inventory.filter(item => !this.selectedItems.includes(item.id));
                     this.selectedItems = []; // Clear selections
@@ -679,6 +774,20 @@
 
                 async fetchData(barcode) {
                     const statusEl = document.getElementById('barcodeStatus');
+                    statusEl.textContent = `Checking inventory for ${barcode}...`;
+
+                    const matchingItems = this.inventoryApp.inventory.filter(item => item.barcode === barcode);
+
+                    if (matchingItems.length > 0) {
+                        this.inventoryApp.openInteractionModal(matchingItems, barcode);
+                        this.stopScan();
+                    } else {
+                        this.fetchAndOpenForm(barcode);
+                    }
+                },
+
+                async fetchAndOpenForm(barcode) {
+                    const statusEl = document.getElementById('barcodeStatus');
                     statusEl.textContent = `Fetching data for ${barcode}...`;
                     const apiUrl = `https://world.openfoodfacts.net/api/v2/product/${barcode}?fields=product_name,quantity,image_front_url`;
 
@@ -699,6 +808,7 @@
                                 const parsedQuantity = JSON.parse(jsonResponse);
 
                                 this.inventoryApp.openItemForm();
+                                document.getElementById('itemBarcode').value = barcode;
                                 document.getElementById('itemName').value = data.product.product_name || '';
                                 document.getElementById('itemQuantityNumeric').value = parsedQuantity.quantity || 1;
                                 document.getElementById('itemUnit').value = parsedQuantity.unit || '';
@@ -719,6 +829,7 @@
                                 console.error('LLM Quantity Parsing Error:', llmError);
                                 // Fallback if LLM parsing fails
                                 this.inventoryApp.openItemForm();
+                                document.getElementById('itemBarcode').value = barcode;
                                 document.getElementById('itemName').value = data.product.product_name || '';
                                 document.getElementById('itemQuantityNumeric').value = 1; // Default to 1
                                 document.getElementById('itemUnit').value = ''; // Default to empty unit
@@ -732,6 +843,7 @@
                         console.error('API Error:', err);
                         alert('Failed to fetch product data.');
                     }
+                    this.stopScan(); // Stop scan after processing
                 }
             };
 
