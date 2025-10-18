@@ -18,7 +18,6 @@
         .modal-leave-active { opacity: 0; transform: scale(0.95); transition: opacity 300ms, transform 300ms; }
         .custom-focus-ring:focus { outline: none; box-shadow: 0 0 0 3px rgba(47, 59, 88, 0.5); }
         .dark .custom-focus-ring:focus { box-shadow: 0 0 0 3px rgba(186, 198, 234, 0.6); }
-        .llm-not-ready { background-color: #a7f3d0 !important; /* Tailwind green-200 */ color: #065f46 !important; /* Tailwind green-800 */ }
         #video, #canvas { max-width: 100%; border-radius: 0.5rem; }
     </style>
     <script>
@@ -50,14 +49,6 @@
             <header class="flex justify-between items-center mb-6">
                 <h1 class="text-2xl sm:text-3xl font-bold text-primary-dark dark:text-primary-light">Smart Pantry Scan</h1>
                 <div class="flex items-center space-x-2 sm:space-x-4">
-                    <div id="llm-progress-container" class="flex items-center space-x-2 mr-4" style="display: none;">
-                        <svg class="mx-auto" width="30" height="30" viewBox="0 0 50 50">
-                            <circle class="text-gray-300 dark:text-gray-600" stroke-width="5" stroke="currentColor" fill="transparent" r="20" cx="25" cy="25"/>
-                            <circle id="llm-progress-ring" class="text-blue-600" stroke-width="5" stroke-linecap="round" stroke="currentColor" fill="transparent" r="20" cx="25" cy="25"
-                                style="stroke-dasharray: 126 126; stroke-dashoffset: 126; transition: stroke-dashoffset 0.3s; transform: rotate(-90deg); transform-origin: 50% 50%;"/>
-                        </svg>
-                        <p id="llm-status" class="text-sm font-medium"></p>
-                    </div>
                     <button id="scanBarcodeBtn" class="flex items-center bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-300 custom-focus-ring">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M2 6h2v12H2V6zm3 0h1v12H5V6zm2 0h2v12H7V6zm3 0h1v12h-1V6zm2 0h2v12h-2V6zm3 0h1v12h-1V6zm2 0h3v12h-3V6z"/>
@@ -252,7 +243,6 @@
                     this.loadInventory();
                     this.addEventListeners();
                     this.render();
-                    window.scannerApp.init(this);
                     window.barcodeScannerApp.init(this);
                 },
 
@@ -296,9 +286,6 @@
                     this.remainingRatioValue = document.getElementById('remainingRatioValue');
                     this.dateAddedInput = document.getElementById('dateAddedInput');
                     this.perishableDaysInput = document.getElementById('perishableDaysInput');
-                    this.llmProgressContainer = document.getElementById('llm-progress-container');
-                    this.llmProgressRing = document.getElementById('llm-progress-ring');
-                    this.llmStatus = document.getElementById('llm-status');
                 },
 
                 addEventListeners() {
@@ -726,10 +713,6 @@
                 },
 
                 async startScan() {
-                    if (!window.scannerApp.engine) {
-                        alert('Please wait for the LLM to be ready before scanning barcodes.');
-                        return;
-                    }
                     const videoElement = document.getElementById('barcodeVideo');
                     const modal = document.getElementById('barcodeScanModal');
                     const statusEl = document.getElementById('barcodeStatus');
@@ -787,49 +770,34 @@
 
                         if (data.status === 1 && data.product && data.product.product_name) {
                             const rawQuantity = data.product.quantity || '';
-                            const llmPrompt = `Parse the following product quantity string into a numeric quantity and its unit. If no unit is specified, use 'units'. If no numeric quantity is found, use 1. Return ONLY a single JSON object in the format: {"quantity": <number>, "unit": "<string>"}\n\nQuantity String: ${rawQuantity}`;
+                            let parsedQuantity = { quantity: 1, unit: 'units' }; // Default values
 
-                            try {
-                                // Wait for LLM engine to be initialized
-                                while (!window.scannerApp || !window.scannerApp.engine) {
-                                    console.log('Waiting for LLM engine to initialize...');
-                                    await new Promise(resolve => setTimeout(resolve, 100));
+                            const match = rawQuantity.match(/(\d+)\s*([a-zA-Z]+)/);
+                            if (match) {
+                                parsedQuantity.quantity = parseInt(match[1], 10);
+                                parsedQuantity.unit = match[2];
+                            } else {
+                                // Fallback for cases like '3 x 100g' or just '3'
+                                const numMatch = rawQuantity.match(/(\d+)/);
+                                if (numMatch) {
+                                    parsedQuantity.quantity = parseInt(numMatch[1], 10);
+                                } else if (rawQuantity.length > 0) {
+                                    // If no number, but there's text, assume it's a unitless count of 1
+                                    parsedQuantity.quantity = 1;
+                                    parsedQuantity.unit = rawQuantity; // Use the whole string as unit if no number
                                 }
-                                const reply = await window.scannerApp.engine.chat.completions.create({ messages: [{ role: "user", content: llmPrompt }], temperature: 0.1 });
-                                let jsonResponse = reply.choices[0].message.content;
-                                const jsonMatch = jsonResponse.match(/\`\`\`json\n([\s\S]*?)\`\`\`/);
-                                if (jsonMatch && jsonMatch[1]) jsonResponse = jsonMatch[1];
-                                const parsedQuantity = JSON.parse(jsonResponse);
-
-                                this.inventoryApp.openItemForm();
-                                document.getElementById('itemBarcode').value = barcode;
-                                document.getElementById('itemName').value = data.product.product_name || '';
-                                document.getElementById('itemQuantityNumeric').value = parsedQuantity.quantity || 1;
-                                document.getElementById('itemUnit').value = parsedQuantity.unit || '';
-                                console.log('Product Image URL:', data.product.image_front_url);
-
-                                // LLM call to suggest perishable days
-                                const perishablePrompt = `Suggest a typical shelf life in days for "${data.product.product_name}". Return ONLY a single number. If unsure, return 7.`;
-                                try {
-                                    const perishableReply = await window.scannerApp.engine.chat.completions.create({ messages: [{ role: "user", content: perishablePrompt }], temperature: 0.1 });
-                                    const suggestedDays = parseInt(perishableReply.choices[0].message.content, 10);
-                                    document.getElementById('perishableDaysInput').value = isNaN(suggestedDays) ? 7 : suggestedDays;
-                                } catch (perishableLlmError) {
-                                    console.error('LLM Perishable Days Suggestion Error:', perishableLlmError);
-                                    document.getElementById('perishableDaysInput').value = 7; // Default if LLM fails
-                                }
-
-                            } catch (llmError) {
-                                console.error('LLM Quantity Parsing Error:', llmError);
-                                // Fallback if LLM parsing fails
-                                this.inventoryApp.openItemForm();
-                                document.getElementById('itemBarcode').value = barcode;
-                                document.getElementById('itemName').value = data.product.product_name || '';
-                                document.getElementById('itemQuantityNumeric').value = 1; // Default to 1
-                                document.getElementById('itemUnit').value = ''; // Default to empty unit
-                                console.log('Product Image URL:', data.product.image_front_url);
-                                alert('Failed to parse quantity with LLM. Defaulting to 1 unit.');
                             }
+
+                            this.inventoryApp.openItemForm();
+                            document.getElementById('itemBarcode').value = barcode;
+                            document.getElementById('itemName').value = data.product.product_name || '';
+                            document.getElementById('itemQuantityNumeric').value = parsedQuantity.quantity;
+                            document.getElementById('itemUnit').value = parsedQuantity.unit;
+                            console.log('Product Image URL:', data.product.image_front_url);
+
+                            // Default perishable days to 7, as LLM is removed
+                            document.getElementById('perishableDaysInput').value = 7;
+
                         } else {
                             alert(`Product not found for barcode: ${barcode}`);
                         }
@@ -844,61 +812,6 @@
             window.barcodeScannerApp = barcodeScannerApp;
             inventoryApp.init();
         });
-    </script>
-
-    <script type="module">
-        import { CreateMLCEngine } from "https://esm.run/@mlc-ai/web-llm";
-
-        window.scannerApp = {
-            engine: null,
-            inventoryApp: null,
-
-            init(inventoryApp) {
-                this.inventoryApp = inventoryApp;
-                this.initLLM();
-            },
-
-            async initLLM() {
-                this.inventoryApp.llmProgressContainer.style.display = 'flex';
-                this.inventoryApp.llmStatus.textContent = 'Initializing LLM...';
-                this.inventoryApp.scanBarcodeBtn.disabled = true;
-                this.inventoryApp.scanBarcodeBtn.classList.add('llm-not-ready');
-                const radius = this.inventoryApp.llmProgressRing.r.baseVal.value;
-                const circumference = 2 * Math.PI * radius;
-                
-                const initProgressCallback = (progress) => {
-                    this.inventoryApp.llmStatus.textContent = progress.text;
-                    const offset = circumference - progress.progress * circumference;
-                    this.inventoryApp.llmProgressRing.style.strokeDashoffset = offset;
-                };
-
-                this.engine = await CreateMLCEngine("gemma-2-2b-it-q4f16_1-MLC", { initProgressCallback });
-                
-                this.inventoryApp.llmProgressContainer.style.display = 'none';
-                this.inventoryApp.scanBarcodeBtn.disabled = false;
-                this.inventoryApp.scanBarcodeBtn.classList.remove('llm-not-ready');
-            },
-
-            async parseTextWithLLM(ocrText) {
-                this.inventoryApp.llmStatus.textContent = 'LLM is parsing...';
-                const prompt = `You are an inventory parsing assistant. Analyze the following product text and extract the Product Name and the total Quantity. If a field is not present, use 'null'. RETURN ONLY a single JSON object in the following format: {"productName": "...", "quantity": "..."}\n\nProduct Text: ${ocrText}`;
-                try {
-                    const reply = await this.engine.chat.completions.create({ messages: [{ role: "user", content: prompt }], temperature: 0.1 });
-                    let jsonResponse = reply.choices[0].message.content;
-                    const jsonMatch = jsonResponse.match(/\`\`\`json\n([\s\S]*?)\`\`\`/);
-                    if (jsonMatch && jsonMatch[1]) jsonResponse = jsonMatch[1];
-                    const parsedData = JSON.parse(jsonResponse);
-                    
-                    this.inventoryApp.closeModal(this.inventoryApp.scanModal);
-                    this.inventoryApp.openItemForm();
-                    document.getElementById('itemName').value = parsedData.productName || '';
-                    document.getElementById('itemQuantityNumeric').value = parsedData.quantity || '';
-                } catch (err) {
-                    console.error('LLM Error:', err);
-                    this.inventoryApp.llmStatus.textContent = 'LLM parsing failed.';
-                }
-            }
-        };
     </script>
 </body>
 </html>
