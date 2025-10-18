@@ -57,10 +57,6 @@
                         </svg>
                         <p id="llm-status" class="text-sm font-medium"></p>
                     </div>
-                    <button id="scanItemBtn" class="flex items-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-300 custom-focus-ring">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                        <span class="hidden sm:inline">Scan Label</span>
-                    </button>
                     <button id="scanBarcodeBtn" class="flex items-center bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-300 custom-focus-ring">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M2 6h2v12H2V6zm3 0h1v12H5V6zm2 0h2v12H7V6zm3 0h1v12h-1V6zm2 0h2v12h-2V6zm3 0h1v12h-1V6zm2 0h3v12h-3V6z"/>
@@ -208,23 +204,7 @@
         </div>
     </div>
 
-    <!-- Scan Item Modal -->
-    <div id="scanModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-primary-light dark:bg-secondary-dark rounded-lg shadow-xl w-full max-w-2xl p-6 modal-enter space-y-4">
-            <h2 class="text-2xl font-bold text-primary-dark dark:text-primary-light">Scan Product Label</h2>
-            <div id="video-container" class="bg-gray-900 rounded-lg flex justify-center items-center relative">
-                <video id="video" autoplay playsinline class="w-full"></video>
-            </div>
-            <canvas id="canvas" class="hidden"></canvas>
-            <div id="status-container" class="p-4 rounded-lg text-center bg-white dark:bg-tertiary-dark">
-                <p id="status" class="font-medium">Initializing...</p>
-            </div>
-            <div class="flex justify-center space-x-4">
-                <button type="button" id="cancelScanBtn" class="py-2 px-4 rounded-lg bg-neutral-light dark:bg-neutral-dark">Cancel</button>
-                <button id="captureBtn" class="py-2 px-6 rounded-lg bg-blue-600 text-white font-bold" disabled>Loading Model...</button>
-            </div>
-        </div>
-    </div>
+    <!-- Confirmation Modal -->
 
     <!-- Confirmation Modal -->
     <div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
@@ -271,14 +251,12 @@
                     this.loadInventory();
                     this.addEventListeners();
                     this.render();
-                    window.scannerApp.init(this);
                     window.barcodeScannerApp.init(this);
                 },
 
                 initDOMElements() {
                     this.themeToggle = document.getElementById('theme-toggle');
                     this.addItemBtn = document.getElementById('addItemBtn');
-                    this.scanItemBtn = document.getElementById('scanItemBtn');
                     this.scanBarcodeBtn = document.getElementById('scanBarcodeBtn');
                     this.itemModal = document.getElementById('itemModal');
                     this.scanModal = document.getElementById('scanModal');
@@ -316,20 +294,14 @@
                     this.remainingRatioValue = document.getElementById('remainingRatioValue');
                     this.dateAddedInput = document.getElementById('dateAddedInput');
                     this.perishableDaysInput = document.getElementById('perishableDaysInput');
-                    this.llmProgressContainer = document.getElementById('llm-progress-container');
-                    this.llmProgressRing = document.getElementById('llm-progress-ring');
-                    this.llmStatus = document.getElementById('llm-status');
                 },
 
                 addEventListeners() {
                     this.themeToggle.addEventListener('click', () => this.toggleTheme());
                     this.addItemBtn.addEventListener('click', () => this.openItemForm());
-                    this.scanItemBtn.addEventListener('click', () => window.scannerApp.startScan());
                     this.scanBarcodeBtn.addEventListener('click', () => window.barcodeScannerApp.startScan());
                     this.cancelBtn.addEventListener('click', () => this.closeModal(this.itemModal));
-                    this.cancelScanBtn.addEventListener('click', () => window.scannerApp.stopScan());
                     this.cancelBarcodeScanBtn.addEventListener('click', () => window.barcodeScannerApp.stopScan());
-                    this.captureBtn.addEventListener('click', () => window.scannerApp.capture());
                     this.itemForm.addEventListener('submit', (e) => this.handleFormSubmit(e));
                     this.interactionCancelBtn.addEventListener('click', () => this.closeModal(this.interactionModal));
                     this.interactionAddNewBtn.addEventListener('click', () => this.addNewItemFromInteraction());
@@ -858,116 +830,6 @@
             window.barcodeScannerApp = barcodeScannerApp;
             inventoryApp.init();
         });
-    </script>
-
-    <script type="module">
-        import { CreateMLCEngine } from "https://esm.run/@mlc-ai/web-llm";
-
-        window.scannerApp = {
-            engine: null,
-            stream: null,
-            inventoryApp: null,
-
-            init(inventoryApp) {
-                this.inventoryApp = inventoryApp;
-                this.initDependencies();
-            },
-
-            async initDependencies() {
-                this.inventoryApp.llmProgressContainer.style.display = 'flex';
-                this.inventoryApp.llmStatus.textContent = 'Initializing...';
-                this.inventoryApp.captureBtn.disabled = true;
-                this.inventoryApp.scanItemBtn.disabled = true;
-                this.inventoryApp.scanBarcodeBtn.disabled = true;
-                this.initLLM();
-            },
-
-            async initLLM() {
-                this.inventoryApp.llmStatus.textContent = 'Initializing LLM...';
-                const radius = this.inventoryApp.llmProgressRing.r.baseVal.value;
-                const circumference = 2 * Math.PI * radius;
-                
-                const initProgressCallback = (progress) => {
-                    this.inventoryApp.llmStatus.textContent = progress.text;
-                    const offset = circumference - progress.progress * circumference;
-                    this.inventoryApp.llmProgressRing.style.strokeDashoffset = offset;
-                };
-
-                this.engine = await CreateMLCEngine("gemma-2-2b-it-q4f16_1-MLC", { initProgressCallback });
-                
-                this.inventoryApp.llmProgressContainer.style.display = 'none';
-                this.inventoryApp.captureBtn.disabled = false;
-                this.inventoryApp.scanItemBtn.disabled = false;
-                this.inventoryApp.scanBarcodeBtn.disabled = false;
-                this.inventoryApp.captureBtn.textContent = 'Capture Image';
-            },
-
-            async startScan() {
-                this.inventoryApp.openModal(this.inventoryApp.scanModal);
-                this.inventoryApp.video.classList.remove('hidden');
-                this.inventoryApp.canvas.classList.add('hidden');
-                try {
-                    this.inventoryApp.statusEl.textContent = 'Requesting camera...';
-                    this.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                    this.inventoryApp.video.srcObject = this.stream;
-                    this.inventoryApp.statusEl.textContent = 'Camera active.';
-                } catch (err) {
-                    this.inventoryApp.statusEl.textContent = 'Camera error.';
-                    console.error(err);
-                }
-            },
-
-            stopScan() {
-                if (this.stream) {
-                    this.stream.getTracks().forEach(track => track.stop());
-                    this.stream = null;
-                }
-                this.inventoryApp.closeModal(this.inventoryApp.scanModal);
-            },
-
-            capture() {
-                if (!this.stream) return;
-                const context = this.inventoryApp.canvas.getContext('2d');
-                this.inventoryApp.canvas.width = this.inventoryApp.video.videoWidth;
-                this.inventoryApp.canvas.height = this.inventoryApp.video.videoHeight;
-                context.drawImage(this.inventoryApp.video, 0, 0);
-                this.stopScan();
-                this.performOCR(this.inventoryApp.canvas);
-            },
-
-            async performOCR(canvas) {
-                this.inventoryApp.statusEl.textContent = 'Recognizing text...';
-                const worker = await Tesseract.createWorker('eng', 1, { logger: m => {
-                    if (m.status === 'recognizing text') this.inventoryApp.statusEl.textContent = `Recognizing... ${Math.round(m.progress * 100)}%`;
-                }});
-                const { data: { text } } = await worker.recognize(canvas);
-                console.log('--- OCR Text Result ---');
-                console.log(text);
-                console.log('-----------------------');
-                await worker.terminate();
-                this.parseTextWithLLM(text);
-            },
-
-            async parseTextWithLLM(ocrText) {
-                this.inventoryApp.statusEl.textContent = 'LLM is parsing...';
-                const prompt = `You are an inventory parsing assistant. Analyze the following product text and extract the Product Name and the total Quantity. If a field is not present, use 'null'. RETURN ONLY a single JSON object in the following format: {"productName": "...", "quantity": "..."}\n\nProduct Text: ${ocrText}`;
-                try {
-                    const reply = await this.engine.chat.completions.create({ messages: [{ role: "user", content: prompt }], temperature: 0.1 });
-                    let jsonResponse = reply.choices[0].message.content;
-                    const jsonMatch = jsonResponse.match(/\`\`\`json\n([\s\S]*?)\`\`\`/);
-                    if (jsonMatch && jsonMatch[1]) jsonResponse = jsonMatch[1];
-                    const parsedData = JSON.parse(jsonResponse);
-                    
-                    this.inventoryApp.closeModal(this.inventoryApp.scanModal);
-                    this.inventoryApp.openItemForm();
-                    document.getElementById('itemName').value = parsedData.productName || '';
-                    document.getElementById('itemQuantityNumeric').value = parsedData.quantity || '';
-                } catch (err) {
-                    console.error('LLM Error:', err);
-                    this.inventoryApp.statusEl.textContent = 'LLM parsing failed.';
-                }
-            }
-        };
     </script>
 </body>
 </html>
