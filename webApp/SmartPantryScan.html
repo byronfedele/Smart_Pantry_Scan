@@ -13,6 +13,7 @@
         .dark ::-webkit-scrollbar-track { background: #273f43; }
         ::-webkit-scrollbar-thumb { background: #00424a; border-radius: 10px; }
         .dark ::-webkit-scrollbar-thumb { background: #bac6ea; }
+        .dark ::-webkit-scrollbar-thumb { background: #bac6ea; }
         .modal-enter { opacity: 0; transform: scale(0.95); }
         .modal-enter-active { opacity: 1; transform: scale(1); transition: opacity 300ms, transform 300ms; }
         .modal-leave-active { opacity: 0; transform: scale(0.95); transition: opacity 300ms, transform 300ms; }
@@ -82,25 +83,17 @@
                             <label for="search" class="block text-sm font-medium text-neutral-dark dark:text-neutral-light mb-1">Search by Name</label>
                             <input type="text" id="search" placeholder="e.g., Laptop" class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-neutral-dark dark:text-neutral-light mb-1">Quantity Range</label>
-                            <div class="flex space-x-2">
-                                <input type="number" id="minQty" placeholder="Min" class="w-1/2 p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
-                                <input type="number" id="maxQty" placeholder="Max" class="w-1/2 p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-neutral-dark dark:text-neutral-light mb-1">Date Added Range</label>
-                            <div class="flex space-x-2">
-                                <input type="date" id="startDate" class="w-1/2 p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
-                                <input type="date" id="endDate" class="w-1/2 p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
-                            </div>
-                        </div>
+
                         <div>
                             <label class="block text-sm font-medium text-neutral-dark dark:text-neutral-light mb-1">Storage Location</label>
                             <div id="locationFilters" class="max-h-24 overflow-y-auto space-y-1 p-2 bg-white dark:bg-tertiary-dark rounded-md border border-tertiary-light dark:border-tertiary-dark">
                             </div>
                         </div>
+                    </div>
+                    <div class="mt-4 flex justify-end">
+                        <button id="clearAllFiltersBtn" class="bg-error hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-300 custom-focus-ring">
+                            Clear Filters
+                        </button>
                     </div>
                 </details>
             </div>
@@ -236,6 +229,7 @@
                 sortConfig: { key: 'dateAdded', direction: 'desc' },
                 itemToDeleteId: null,
                 selectedItems: [],
+                selectedLocationFilters: [], // New array to store selected locations
 
                 init() {
                     this.initDOMElements();
@@ -274,10 +268,6 @@
                     this.locationFiltersContainer = document.getElementById('locationFilters');
                     this.locationDatalist = document.getElementById('location-list');
                     this.noResultsDiv = document.getElementById('no-results');
-                    this.captureBtn = document.getElementById('captureBtn');
-                    this.statusEl = document.getElementById('status');
-                    this.video = document.getElementById('video');
-                    this.canvas = document.getElementById('canvas');
                     this.barcodeVideo = document.getElementById('barcodeVideo');
                     this.barcodeStatusEl = document.getElementById('barcodeStatus');
                     this.isDiscrete = document.getElementById('isDiscrete');
@@ -286,6 +276,7 @@
                     this.remainingRatioValue = document.getElementById('remainingRatioValue');
                     this.dateAddedInput = document.getElementById('dateAddedInput');
                     this.perishableDaysInput = document.getElementById('perishableDaysInput');
+                    this.clearAllFiltersBtn = document.getElementById('clearAllFiltersBtn');
                 },
 
                 addEventListeners() {
@@ -305,8 +296,9 @@
                     this.tableBody.addEventListener('click', (e) => this.handleTableActions(e));
                     this.paginationContainer.addEventListener('click', (e) => this.handlePaginationClick(e));
                     document.querySelector('thead').addEventListener('click', (e) => this.handleSort(e));
-                    this.filterInputs.forEach(input => input.addEventListener('input', () => this.handleFilterChange()));
-                    this.locationFiltersContainer.addEventListener('change', () => this.handleFilterChange());
+                    this.filterInputs.forEach(input => input.addEventListener('input', (e) => this.handleFilterChange(e)));
+                    this.locationFiltersContainer.addEventListener('change', (e) => this.handleFilterChange(e));
+                    this.clearAllFiltersBtn.addEventListener('click', () => this.clearAllFilters());
 
                     // New event listeners for remaining quantity slider
                     this.isDiscrete.addEventListener('change', () => {
@@ -315,6 +307,13 @@
                     this.remainingRatio.addEventListener('input', () => {
                         this.remainingRatioValue.textContent = `${this.remainingRatio.value}%`;
                     });
+                },
+
+                clearAllFilters() {
+                    document.getElementById('search').value = '';
+                    this.selectedLocationFilters = [];
+                    this.currentPage = 1;
+                    this.render();
                 },
                 
                 loadTheme() {
@@ -472,7 +471,18 @@
                     this.render();
                 },
                 
-                handleFilterChange() {
+                handleFilterChange(e) {
+                    const target = e.target;
+                    if (target.matches('#locationFilters input[type="checkbox"]')) {
+                        const location = target.value;
+                        if (target.checked) {
+                            if (!this.selectedLocationFilters.includes(location)) {
+                                this.selectedLocationFilters.push(location);
+                            }
+                        } else {
+                            this.selectedLocationFilters = this.selectedLocationFilters.filter(loc => loc !== location);
+                        }
+                    }
                     this.currentPage = 1;
                     this.render();
                 },
@@ -487,22 +497,10 @@
 
                 applyFiltersAndSort() {
                     const searchTerm = document.getElementById('search').value.toLowerCase();
-                    const minQty = parseInt(document.getElementById('minQty').value, 10) || 0;
-                    const maxQty = parseInt(document.getElementById('maxQty').value, 10) || Infinity;
-                    const startDate = document.getElementById('startDate').value;
-                    const endDate = document.getElementById('endDate').value;
-                    const selectedLocations = Array.from(document.querySelectorAll('#locationFilters input:checked')).map(cb => cb.value);
 
                     this.filteredInventory = this.inventory.filter(item => {
-                        const itemDate = new Date(item.dateAdded);
-                        const start = startDate ? new Date(startDate) : null;
-                        const end = endDate ? new Date(endDate) : null;
-                        if(end) end.setHours(23, 59, 59, 999);
-
                         return item.name.toLowerCase().includes(searchTerm) &&
-                            item.quantity >= minQty && item.quantity <= maxQty &&
-                            (!start || itemDate >= start) && (!end || itemDate <= end) &&
-                            (selectedLocations.length === 0 || selectedLocations.includes(item.location));
+                            (this.selectedLocationFilters.length === 0 || this.selectedLocationFilters.includes(item.location));
                     });
 
                     this.filteredInventory.sort((a, b) => {
@@ -575,9 +573,14 @@
 
                 renderLocationFilters() {
                     const locations = [...new Set(this.inventory.map(item => item.location))].sort();
-                    this.locationFiltersContainer.innerHTML = locations.map(location => `
-                        <div><input type="checkbox" value="${location}" id="loc-${location}"><label for="loc-${location}" class="ml-2">${location}</label></div>
-                    `).join('');
+                    this.locationFiltersContainer.innerHTML = locations.map(location => {
+                        const isChecked = this.selectedLocationFilters.includes(location);
+                        return `
+                            <div class="flex items-center">
+                                <input type="checkbox" value="${location}" id="loc-${location}" class="h-4 w-4 text-primary-dark focus:ring-primary-dark border-gray-300 rounded" ${isChecked ? 'checked' : ''}>
+                                <label for="loc-${location}" class="ml-2 text-sm font-medium text-neutral-dark dark:text-neutral-light">${location}</label>
+                            </div>`;
+                    }).join('');
                 },
 
                 renderLocationDatalist() {
