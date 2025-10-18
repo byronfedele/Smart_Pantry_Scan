@@ -18,6 +18,7 @@
         .modal-leave-active { opacity: 0; transform: scale(0.95); transition: opacity 300ms, transform 300ms; }
         .custom-focus-ring:focus { outline: none; box-shadow: 0 0 0 3px rgba(47, 59, 88, 0.5); }
         .dark .custom-focus-ring:focus { box-shadow: 0 0 0 3px rgba(186, 198, 234, 0.6); }
+        .llm-not-ready { background-color: #a7f3d0 !important; /* Tailwind green-200 */ color: #065f46 !important; /* Tailwind green-800 */ }
         #video, #canvas { max-width: 100%; border-radius: 0.5rem; }
     </style>
     <script>
@@ -251,6 +252,7 @@
                     this.loadInventory();
                     this.addEventListeners();
                     this.render();
+                    window.scannerApp.init(this);
                     window.barcodeScannerApp.init(this);
                 },
 
@@ -294,6 +296,9 @@
                     this.remainingRatioValue = document.getElementById('remainingRatioValue');
                     this.dateAddedInput = document.getElementById('dateAddedInput');
                     this.perishableDaysInput = document.getElementById('perishableDaysInput');
+                    this.llmProgressContainer = document.getElementById('llm-progress-container');
+                    this.llmProgressRing = document.getElementById('llm-progress-ring');
+                    this.llmStatus = document.getElementById('llm-status');
                 },
 
                 addEventListeners() {
@@ -721,6 +726,10 @@
                 },
 
                 async startScan() {
+                    if (!window.scannerApp.engine) {
+                        alert('Please wait for the LLM to be ready before scanning barcodes.');
+                        return;
+                    }
                     const videoElement = document.getElementById('barcodeVideo');
                     const modal = document.getElementById('barcodeScanModal');
                     const statusEl = document.getElementById('barcodeStatus');
@@ -781,6 +790,11 @@
                             const llmPrompt = `Parse the following product quantity string into a numeric quantity and its unit. If no unit is specified, use 'units'. If no numeric quantity is found, use 1. Return ONLY a single JSON object in the format: {"quantity": <number>, "unit": "<string>"}\n\nQuantity String: ${rawQuantity}`;
 
                             try {
+                                // Wait for LLM engine to be initialized
+                                while (!window.scannerApp || !window.scannerApp.engine) {
+                                    console.log('Waiting for LLM engine to initialize...');
+                                    await new Promise(resolve => setTimeout(resolve, 100));
+                                }
                                 const reply = await window.scannerApp.engine.chat.completions.create({ messages: [{ role: "user", content: llmPrompt }], temperature: 0.1 });
                                 let jsonResponse = reply.choices[0].message.content;
                                 const jsonMatch = jsonResponse.match(/\`\`\`json\n([\s\S]*?)\`\`\`/);
@@ -830,6 +844,61 @@
             window.barcodeScannerApp = barcodeScannerApp;
             inventoryApp.init();
         });
+    </script>
+
+    <script type="module">
+        import { CreateMLCEngine } from "https://esm.run/@mlc-ai/web-llm";
+
+        window.scannerApp = {
+            engine: null,
+            inventoryApp: null,
+
+            init(inventoryApp) {
+                this.inventoryApp = inventoryApp;
+                this.initLLM();
+            },
+
+            async initLLM() {
+                this.inventoryApp.llmProgressContainer.style.display = 'flex';
+                this.inventoryApp.llmStatus.textContent = 'Initializing LLM...';
+                this.inventoryApp.scanBarcodeBtn.disabled = true;
+                this.inventoryApp.scanBarcodeBtn.classList.add('llm-not-ready');
+                const radius = this.inventoryApp.llmProgressRing.r.baseVal.value;
+                const circumference = 2 * Math.PI * radius;
+                
+                const initProgressCallback = (progress) => {
+                    this.inventoryApp.llmStatus.textContent = progress.text;
+                    const offset = circumference - progress.progress * circumference;
+                    this.inventoryApp.llmProgressRing.style.strokeDashoffset = offset;
+                };
+
+                this.engine = await CreateMLCEngine("gemma-2-2b-it-q4f16_1-MLC", { initProgressCallback });
+                
+                this.inventoryApp.llmProgressContainer.style.display = 'none';
+                this.inventoryApp.scanBarcodeBtn.disabled = false;
+                this.inventoryApp.scanBarcodeBtn.classList.remove('llm-not-ready');
+            },
+
+            async parseTextWithLLM(ocrText) {
+                this.inventoryApp.llmStatus.textContent = 'LLM is parsing...';
+                const prompt = `You are an inventory parsing assistant. Analyze the following product text and extract the Product Name and the total Quantity. If a field is not present, use 'null'. RETURN ONLY a single JSON object in the following format: {"productName": "...", "quantity": "..."}\n\nProduct Text: ${ocrText}`;
+                try {
+                    const reply = await this.engine.chat.completions.create({ messages: [{ role: "user", content: prompt }], temperature: 0.1 });
+                    let jsonResponse = reply.choices[0].message.content;
+                    const jsonMatch = jsonResponse.match(/\`\`\`json\n([\s\S]*?)\`\`\`/);
+                    if (jsonMatch && jsonMatch[1]) jsonResponse = jsonMatch[1];
+                    const parsedData = JSON.parse(jsonResponse);
+                    
+                    this.inventoryApp.closeModal(this.inventoryApp.scanModal);
+                    this.inventoryApp.openItemForm();
+                    document.getElementById('itemName').value = parsedData.productName || '';
+                    document.getElementById('itemQuantityNumeric').value = parsedData.quantity || '';
+                } catch (err) {
+                    console.error('LLM Error:', err);
+                    this.inventoryApp.llmStatus.textContent = 'LLM parsing failed.';
+                }
+            }
+        };
     </script>
 </body>
 </html>
