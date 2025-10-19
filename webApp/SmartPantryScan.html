@@ -231,13 +231,22 @@
     <div id="barcodeScanModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
         <div class="bg-primary-light dark:bg-secondary-dark rounded-lg shadow-xl w-full max-w-2xl p-6 modal-enter space-y-4">
             <h2 class="text-2xl font-bold text-primary-dark dark:text-primary-light">Scan Barcode</h2>
-            <div class="bg-gray-900 rounded-lg flex justify-center items-center relative">
+            <div class="bg-gray-900 rounded-lg flex justify-center items-center relative overflow-hidden">
                 <video id="barcodeVideo" class="w-full"></video>
+                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div class="w-3/4 h-1/2 border-2 border-green-500 rounded-lg opacity-75"></div>
+                </div>
             </div>
             <div id="barcode-status-container" class="p-4 rounded-lg text-center bg-white dark:bg-tertiary-dark">
                 <p id="barcodeStatus" class="font-medium">Searching for barcode...</p>
             </div>
-            <div class="flex justify-center">
+            <div class="flex justify-center space-x-4">
+                <button type="button" id="toggleFlashlightBtn" class="py-2 px-4 rounded-lg bg-gray-500 text-white font-bold hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M11.316 1.018a.75.75 0 01.784.068l5.5 4.5A.75.75 0 0118 6.75v6.5a.75.75 0 01-.394.655l-5.5 3.5A.75.75 0 0112 17.25v-3.072l-1.47 1.47a.75.75 0 01-1.06-1.06l2.75-2.75a.75.75 0 011.06 0l2.75 2.75a.75.75 0 01-1.06 1.06l-1.47-1.47V17.25a.75.75 0 01-.394-.655l-5.5-3.5A.75.75 0 012 13.25v-6.5a.75.75 0 01.394-.655l5.5-4.5a.75.75 0 01.784-.068zM12 12.928V6.75H6.75v6.178l5.25 3.357V12.928z" clip-rule="evenodd" />
+                    </svg>
+                    Flashlight
+                </button>
                 <button type="button" id="cancelBarcodeScanBtn" class="py-2 px-4 rounded-lg bg-neutral-light dark:bg-neutral-dark">Cancel</button>
             </div>
         </div>
@@ -297,6 +306,7 @@
                     this.noResultsDiv = document.getElementById('no-results');
                     this.barcodeVideo = document.getElementById('barcodeVideo');
                     this.barcodeStatusEl = document.getElementById('barcodeStatus');
+                    this.toggleFlashlightBtn = document.getElementById('toggleFlashlightBtn');
                     this.isDiscrete = document.getElementById('isDiscrete');
                     this.continuousQuantityInput = document.getElementById('continuousQuantityInput');
                     this.itemUnitInput = document.getElementById('itemUnitInput');
@@ -322,6 +332,7 @@
                     this.scanBarcodeBtn.addEventListener('click', () => window.barcodeScannerApp.startScan());
                     this.cancelBtn.addEventListener('click', () => this.closeModal(this.itemModal));
                     this.cancelBarcodeScanBtn.addEventListener('click', () => window.barcodeScannerApp.stopScan());
+                    this.toggleFlashlightBtn.addEventListener('click', () => window.barcodeScannerApp.toggleFlashlight());
                     this.itemForm.addEventListener('submit', (e) => this.handleFormSubmit(e));
                     this.interactionCancelBtn.addEventListener('click', () => this.closeModal(this.interactionModal));
                     this.interactionAddNewBtn.addEventListener('click', () => this.addNewItemFromInteraction());
@@ -831,10 +842,21 @@
             const barcodeScannerApp = {
                 inventoryApp: null,
                 codeReader: null,
+                isTorchOn: false,
+                videoTrack: null, // New property to store the video track
 
                 init(inventoryApp) {
                     this.inventoryApp = inventoryApp;
-                    this.codeReader = new ZXing.BrowserMultiFormatReader();
+                    const hints = new Map();
+                    const formats = [
+                        ZXing.BarcodeFormat.EAN_13,
+                        ZXing.BarcodeFormat.UPC_A,
+                        ZXing.BarcodeFormat.EAN_8,
+                        ZXing.BarcodeFormat.UPC_E,
+                        ZXing.BarcodeFormat.CODE_128,
+                    ];
+                    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, formats);
+                    this.codeReader = new ZXing.BrowserMultiFormatReader(hints);
                 },
 
                 async startScan() {
@@ -849,6 +871,7 @@
                         this.codeReader.decodeFromVideoDevice(undefined, videoElement, (result, err) => {
                             if (result) {
                                 statusEl.textContent = `Found barcode: ${result.getText()}`;
+                                this.playScanSuccessSound(); // Play sound on successful scan
                                 this.fetchData(result.getText());
                                 this.stopScan();
                             }
@@ -858,15 +881,78 @@
                             }
                         });
                         statusEl.textContent = 'Searching for barcode...';
+
+                        // Listen for loadedmetadata to ensure stream is ready before checking capabilities
+                        videoElement.addEventListener('loadedmetadata', () => {
+                            console.log('loadedmetadata fired. videoElement.srcObject:', videoElement.srcObject);
+                            if (videoElement.srcObject) {
+                                const track = videoElement.srcObject.getVideoTracks()[0];
+                                if (track) {
+                                    this.videoTrack = track; // Store the track
+                                    console.log('MediaStreamTrack found:', track);
+                                    const capabilities = track.getCapabilities();
+                                    console.log('Track capabilities:', capabilities);
+                                    if (capabilities.torch) {
+                                        this.inventoryApp.toggleFlashlightBtn.classList.remove('hidden');
+                                        this.inventoryApp.toggleFlashlightBtn.classList.remove('bg-yellow-500');
+                                        this.inventoryApp.toggleFlashlightBtn.classList.add('bg-gray-500');
+                                        console.log('Flashlight button shown and set to gray.');
+                                    } else {
+                                        this.inventoryApp.toggleFlashlightBtn.classList.add('hidden');
+                                        console.log('Flashlight not supported, button hidden.');
+                                    }
+                                } else {
+                                    this.inventoryApp.toggleFlashlightBtn.classList.add('hidden');
+                                    console.log('No video track found, flashlight button hidden.');
+                                }
+                            } else {
+                                this.inventoryApp.toggleFlashlightBtn.classList.add('hidden');
+                                console.log('videoElement.srcObject is null, flashlight button hidden.');
+                            }
+                            // Clear the initial camera access denied message if camera is working
+                            if (statusEl.textContent === 'Requesting camera access...' || statusEl.textContent.includes('Camera access denied')) {
+                                statusEl.textContent = 'Searching for barcode...';
+                            }
+                        }, { once: true }); // Use { once: true } to remove the listener after it fires
+
                     } catch (err) {
                         console.error('Camera Error:', err);
                         statusEl.textContent = 'Camera access denied or not available.';
+                        this.inventoryApp.toggleFlashlightBtn.classList.add('hidden');
                     }
                 },
 
                 stopScan() {
                     this.codeReader.reset();
                     this.inventoryApp.closeModal(document.getElementById('barcodeScanModal'));
+                    // Turn off flashlight and hide button when scan stops
+                    if (this.isTorchOn && this.videoTrack) {
+                        this.videoTrack.applyConstraints({ advanced: [{ torch: false }] });
+                        this.isTorchOn = false;
+                    }
+                    this.inventoryApp.toggleFlashlightBtn.classList.add('hidden');
+                    this.videoTrack = null; // Clear the stored track
+                },
+
+                async toggleFlashlight() {
+                    console.log('toggleFlashlight called. Current isTorchOn:', this.isTorchOn);
+                    if (!this.videoTrack) {
+                        console.warn('No video track available for flashlight control.');
+                        return;
+                    }
+                    this.isTorchOn = !this.isTorchOn;
+                    console.log('New isTorchOn:', this.isTorchOn);
+                    try {
+                        await this.videoTrack.applyConstraints({ advanced: [{ torch: this.isTorchOn }] });
+                        console.log('applyConstraints successful. Torch state:', this.isTorchOn);
+                        this.inventoryApp.toggleFlashlightBtn.classList.toggle('bg-yellow-500', this.isTorchOn);
+                        this.inventoryApp.toggleFlashlightBtn.classList.toggle('bg-gray-500', !this.isTorchOn);
+                        console.log('Flashlight button classes updated.');
+                    } catch (error) {
+                        console.error('Error setting torch:', error);
+                        // Revert isTorchOn if setting torch failed
+                        this.isTorchOn = !this.isTorchOn;
+                    }
                 },
 
                 async fetchData(barcode) {
@@ -880,6 +966,28 @@
                         this.stopScan();
                     } else {
                         this.fetchAndOpenForm(barcode);
+                    }
+                },
+
+                playScanSuccessSound() {
+                    try {
+                        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                        const oscillator = audioContext.createOscillator();
+                        const gainNode = audioContext.createGain();
+
+                        oscillator.type = 'sine'; // or 'square', 'sawtooth', 'triangle'
+                        oscillator.frequency.setValueAtTime(800, audioContext.currentTime); // pitch in Hz
+                        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                        gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.01); // fade in
+                        gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.15); // fade out
+
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+
+                        oscillator.start(audioContext.currentTime);
+                        oscillator.stop(audioContext.currentTime + 0.15); // duration
+                    } catch (e) {
+                        console.warn('Web Audio API not supported or failed to play sound:', e);
                     }
                 },
 
