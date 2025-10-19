@@ -183,8 +183,13 @@
                     <input type="date" id="dateAddedInput" required class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
                 </div>
                 <div class="mb-6">
-                    <label for="perishableDaysInput" class="block text-sm font-medium mb-1">Perishable (days)</label>
-                    <input type="number" id="perishableDaysInput" min="0" class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
+                    <label for="perishableDateInput" class="block text-sm font-medium mb-1">Perishable Date</label>
+                    <div class="flex items-center space-x-2">
+                        <input type="date" id="perishableDateInput" class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
+                        <button type="button" id="quickAdd3Days" class="p-2 bg-gray-200 dark:bg-gray-700 rounded-md text-sm custom-focus-ring whitespace-nowrap">+3 Days</button>
+                        <button type="button" id="quickAdd7Days" class="p-2 bg-gray-200 dark:bg-gray-700 rounded-md text-sm custom-focus-ring whitespace-nowrap">+7 Days</button>
+                        <button type="button" id="quickAdd1Month" class="p-2 bg-gray-200 dark:bg-gray-700 rounded-md text-sm custom-focus-ring whitespace-nowrap">+1 Month</button>
+                    </div>
                 </div>
                 <div class="flex justify-between space-x-4">
                     <div>
@@ -318,7 +323,10 @@
                     this.remainingRatio = document.getElementById('remainingRatio');
                     this.remainingRatioValue = document.getElementById('remainingRatioValue');
                     this.dateAddedInput = document.getElementById('dateAddedInput');
-                    this.perishableDaysInput = document.getElementById('perishableDaysInput');
+                    this.perishableDateInput = document.getElementById('perishableDateInput');
+                    this.quickAdd3Days = document.getElementById('quickAdd3Days');
+                    this.quickAdd7Days = document.getElementById('quickAdd7Days');
+                    this.quickAdd1Month = document.getElementById('quickAdd1Month');
                     this.clearAllFiltersBtn = document.getElementById('clearAllFiltersBtn');
                     this.deleteItemBtn = document.getElementById('deleteItemBtn');
                     this.showSpoiledCheckbox = document.getElementById('showSpoiled');
@@ -379,6 +387,10 @@
                         let currentValue = parseInt(this.discreteItemQuantity.value, 10);
                         this.discreteItemQuantity.value = currentValue + 1;
                     });
+
+                    this.quickAdd3Days.addEventListener('click', () => this.handleQuickAdd(3, 'days'));
+                    this.quickAdd7Days.addEventListener('click', () => this.handleQuickAdd(7, 'days'));
+                    this.quickAdd1Month.addEventListener('click', () => this.handleQuickAdd(1, 'months'));
                 },
 
                 clearAllFilters() {
@@ -408,16 +420,16 @@
                     } else {
                         // Default food-related inventory items
                         this.inventory = [
-                            { id: 1, name: 'Milk', quantity: 1, unit: 'Liter', isDiscrete: false, remainingRatio: 0.75, location: 'Refrigerator', dateAdded: '2025-09-28T10:00:00Z', perishableDays: 7 },
-                            { id: 2, name: 'Bananas', quantity: 6, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Counter', dateAdded: '2025-09-29T11:30:00Z', perishableDays: 5 },
-                            { id: 3, name: 'Canned Tomatoes', quantity: 2, unit: 'cans', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-09-25T14:00:00Z', perishableDays: 365 },
-                            { id: 4, name: 'Eggs', quantity: 12, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Refrigerator', dateAdded: '2025-09-20T09:00:00Z', perishableDays: 21 },
-                            { id: 5, name: 'Bread', quantity: 1, unit: 'loaf', isDiscrete: false, remainingRatio: 0.5, location: 'Pantry', dateAdded: '2025-09-30T16:00:00Z', perishableDays: 7 },
-                            { id: 6, name: 'Yogurt', quantity: 4, unit: 'cups', isDiscrete: true, remainingRatio: 1, location: 'Refrigerator', dateAdded: '2025-09-27T08:00:00Z', perishableDays: 14 },
-                            { id: 7, name: 'Coffee Beans', quantity: 500, unit: 'grams', isDiscrete: false, remainingRatio: 0.8, location: 'Pantry', dateAdded: '2025-09-26T13:00:00Z', perishableDays: 90 },
-                            { id: 8, name: 'Apples', quantity: 5, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Counter', dateAdded: '2025-09-24T10:00:00Z', perishableDays: 14 },
-                            { id: 9, name: 'Cheese', quantity: 200, unit: 'grams', isDiscrete: false, remainingRatio: 0.6, location: 'Refrigerator', dateAdded: '2025-09-23T15:00:00Z', perishableDays: 30 },
-                            { id: 10, name: 'Pasta', quantity: 1, unit: 'box', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-09-22T12:00:00Z', perishableDays: 730 },
+                            { id: 1, name: 'Milk', quantity: 1, unit: 'Liter', isDiscrete: false, remainingRatio: 0.75, location: 'Refrigerator', dateAdded: '2025-09-28T10:00:00Z', perishableDate: '2025-10-26T10:00:00Z' },
+                            { id: 2, name: 'Bananas', quantity: 6, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Counter', dateAdded: '2025-09-29T11:30:00Z', perishableDate: '2025-10-24T11:30:00Z' },
+                            { id: 3, name: 'Canned Tomatoes', quantity: 2, unit: 'cans', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-09-25T14:00:00Z', perishableDate: '2026-09-25T14:00:00Z' },
+                            { id: 4, name: 'Eggs', quantity: 12, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Refrigerator', dateAdded: '2025-09-20T09:00:00Z', perishableDate: '2025-10-11T09:00:00Z' },
+                            { id: 5, name: 'Bread', quantity: 1, unit: 'loaf', isDiscrete: false, remainingRatio: 0.5, location: 'Pantry', dateAdded: '2025-09-30T16:00:00Z', perishableDate: '2025-10-07T16:00:00Z' },
+                            { id: 6, name: 'Yogurt', quantity: 4, unit: 'cups', isDiscrete: true, remainingRatio: 1, location: 'Refrigerator', dateAdded: '2025-09-27T08:00:00Z', perishableDate: '2025-10-11T08:00:00Z' },
+                            { id: 7, name: 'Coffee Beans', quantity: 500, unit: 'grams', isDiscrete: false, remainingRatio: 0.8, location: 'Pantry', dateAdded: '2025-09-26T13:00:00Z', perishableDate: '2025-12-25T13:00:00Z' },
+                            { id: 8, name: 'Apples', quantity: 5, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Counter', dateAdded: '2025-09-24T10:00:00Z', perishableDate: '2025-10-08T10:00:00Z' },
+                            { id: 9, name: 'Cheese', quantity: 200, unit: 'grams', isDiscrete: false, remainingRatio: 0.6, location: 'Refrigerator', dateAdded: '2025-09-23T15:00:00Z', perishableDate: '2025-10-23T15:00:00Z' },
+                            { id: 10, name: 'Pasta', quantity: 1, unit: 'box', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-09-22T12:00:00Z', perishableDate: '2027-09-22T12:00:00Z' },
                         ];
                     }
                 },
@@ -466,7 +478,7 @@
                         }
 
                         this.dateAddedInput.value = item.dateAdded ? item.dateAdded.split('T')[0] : '';
-                        this.perishableDaysInput.value = item.perishableDays || '';
+                        this.perishableDateInput.value = item.perishableDate ? item.perishableDate.split('T')[0] : '';
                         this.deleteItemBtn.classList.remove('hidden'); // Show delete button for existing items
                     } else {
                         // For new items, default to continuous input visible, discrete hidden
@@ -480,7 +492,7 @@
                         this.remainingRatioValue.textContent = '100%';
                         this.remainingQuantitySliderContainer.style.display = 'block';
                         this.dateAddedInput.valueAsDate = new Date(); // Default to current date for new item
-                        this.perishableDaysInput.value = ''; // Clear for new item, LLM will suggest
+                        this.perishableDateInput.value = ''; // Clear for new item
                         this.deleteItemBtn.classList.add('hidden'); // Hide delete button for new items
                     }
                     this.openModal(this.itemModal);
@@ -490,6 +502,16 @@
                     console.log('openConfirmModal called with ID:', id);
                     this.itemToDeleteId = id;
                     this.openModal(this.confirmModal);
+                },
+
+                handleQuickAdd(amount, unit) {
+                    const date = new Date(this.perishableDateInput.value || new Date());
+                    if (unit === 'days') {
+                        date.setDate(date.getDate() + amount);
+                    } else if (unit === 'months') {
+                        date.setMonth(date.getMonth() + amount);
+                    }
+                    this.perishableDateInput.valueAsDate = date;
                 },
 
                 handleFormSubmit(e) {
@@ -520,7 +542,7 @@
                         remainingRatio: remainingRatioValue,
                         location: document.getElementById('itemLocation').value,
                         dateAdded: new Date(document.getElementById('dateAddedInput').value).toISOString(),
-                        perishableDays: parseInt(document.getElementById('perishableDaysInput').value, 10) || null,
+                        perishableDate: document.getElementById('perishableDateInput').value ? new Date(document.getElementById('perishableDateInput').value).toISOString() : null,
                         lastModified: new Date().toISOString(),
                     };
                     if (id) {
@@ -615,10 +637,9 @@
                     const searchTerm = document.getElementById('search').value.toLowerCase();
 
                     this.filteredInventory = this.inventory.filter(item => {
-                        const daysSinceAdded = Math.floor((new Date() - new Date(item.dateAdded)) / (1000 * 60 * 60 * 24));
-                        const daysRemaining = item.perishableDays !== null && item.perishableDays !== undefined ? (item.perishableDays - daysSinceAdded) : null;
-                        const isSpoiled = daysRemaining !== null && daysRemaining <= 0;
-                        const isExpiringSoon = this.showExpiringSoon && daysRemaining !== null && daysRemaining > 0 && daysRemaining <= this.expiringDays;
+                    const daysRemaining = item.perishableDate ? Math.floor((new Date(item.perishableDate) - new Date()) / (1000 * 60 * 60 * 24)) : null;
+                    const isSpoiled = daysRemaining !== null && daysRemaining < 0;
+                    const isExpiringSoon = this.showExpiringSoon && daysRemaining !== null && daysRemaining >= 0 && daysRemaining <= this.expiringDays;
 
                         return item.name.toLowerCase().includes(searchTerm) &&
                             (this.selectedLocationFilters.length === 0 || this.selectedLocationFilters.includes(item.location)) &&
@@ -630,10 +651,10 @@
                         let aVal, bVal;
 
                         if (this.sortConfig.key === 'spoilage') {
-                            const aDaysSinceAdded = Math.floor((new Date() - new Date(a.dateAdded)) / (1000 * 60 * 60 * 24));
-                            const bDaysSinceAdded = Math.floor((new Date() - new Date(b.dateAdded)) / (1000 * 60 * 60 * 24));
-                            aVal = a.perishableDays !== null && a.perishableDays !== undefined ? (a.perishableDays - aDaysSinceAdded) : Infinity; // Treat N/A as very far away
-                            bVal = b.perishableDays !== null && b.perishableDays !== undefined ? (b.perishableDays - bDaysSinceAdded) : Infinity;
+                            const aDaysRemaining = a.perishableDate ? Math.floor((new Date(a.perishableDate) - new Date()) / (1000 * 60 * 60 * 24)) : Infinity;
+                            const bDaysRemaining = b.perishableDate ? Math.floor((new Date(b.perishableDate) - new Date()) / (1000 * 60 * 60 * 24)) : Infinity;
+                            aVal = aDaysRemaining;
+                            bVal = bDaysRemaining;
                         } else if (this.sortConfig.key === 'amountRemaining') {
                             aVal = a.isDiscrete ? a.quantity : a.remainingRatio;
                             bVal = b.isDiscrete ? b.quantity : b.remainingRatio;
@@ -657,15 +678,15 @@
                         row.className = 'border-b border-secondary-light dark:border-tertiary-dark hover:bg-secondary-light dark:hover:bg-tertiary-dark cursor-pointer';
                         row.dataset.id = item.id; // Add data-id to the row
                         const isSelected = this.selectedItems.includes(item.id);
-                        const daysSinceAdded = Math.floor((new Date() - new Date(item.dateAdded)) / (1000 * 60 * 60 * 24));
-                        const daysRemaining = item.perishableDays !== null && item.perishableDays !== undefined ? (item.perishableDays - daysSinceAdded) : null;
+                        const daysRemaining = item.perishableDate ? Math.floor((new Date(item.perishableDate) - new Date()) / (1000 * 60 * 60 * 24)) : null;
                         let expiryText = '';
                         if (daysRemaining !== null) {
-                            if (daysRemaining <= 0) {
+                            if (daysRemaining < 0) {
                                 expiryText = '<span class="text-red-500 font-bold">Expired!</span>';
                             } else if (daysRemaining <= 3) {
                                 expiryText = `<span class="text-orange-500 font-bold">${daysRemaining} days left</span>`;
-                            } else {
+                            }
+                            else {
                                 expiryText = `${daysRemaining} days left`;
                             }
                         } else {
@@ -687,7 +708,7 @@
                                 }
                             </td>
                             <td class="p-4">${expiryText}</td>
-                            <td class="p-4">${daysSinceAdded} days ago</td>
+                            <td class="p-4">${new Date(item.dateAdded).toLocaleDateString()}</td>
                             <td class="p-4">${item.location}</td>`;
                         this.tableBody.appendChild(row);
                     });
@@ -762,11 +783,10 @@
                 openInteractionModal(items, barcode) {
                     this.interactionList.innerHTML = '';
                     items.forEach(item => {
-                        const daysSinceAdded = Math.floor((new Date() - new Date(item.dateAdded)) / (1000 * 60 * 60 * 24));
-                        const daysRemaining = item.perishableDays !== null && item.perishableDays !== undefined ? (item.perishableDays - daysSinceAdded) : null;
+                        const daysRemaining = item.perishableDate ? Math.floor((new Date(item.perishableDate) - new Date()) / (1000 * 60 * 60 * 24)) : null;
                         let expiryText = '';
                         if (daysRemaining !== null) {
-                            if (daysRemaining <= 0) {
+                            if (daysRemaining < 0) {
                                 expiryText = '<span class="text-red-500 font-bold">Expired!</span>';
                             } else if (daysRemaining <= 3) {
                                 expiryText = `<span class="text-orange-500 font-bold">${daysRemaining} days left</span>`;
@@ -782,7 +802,7 @@
                         itemElement.innerHTML = `
                             <div>
                                 <p class="font-semibold">${item.name}</p>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">Added: ${daysSinceAdded} days ago | Spoilage: ${expiryText}</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Spoilage: ${expiryText}</p>
                                 <p class="text-sm text-gray-500 dark:text-gray-400">Modified: ${new Date(item.lastModified).toLocaleString()}</p>
                             </div>
                             <div class="flex space-x-2">
@@ -1028,8 +1048,10 @@
                             document.getElementById('itemUnit').value = parsedQuantity.unit;
                             console.log('Product Image URL:', data.product.image_front_url);
 
-                            // Default perishable days to 7, as LLM is removed
-                            document.getElementById('perishableDaysInput').value = 7;
+                            // Default perishable date to 7 days from now
+                            const date = new Date();
+                            date.setDate(date.getDate() + 7);
+                            document.getElementById('perishableDateInput').valueAsDate = date;
 
                         } else {
                             alert(`Product not found for barcode: ${barcode}`);
