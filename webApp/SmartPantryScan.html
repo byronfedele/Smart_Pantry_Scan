@@ -118,10 +118,10 @@
                             <tr>
                                 <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider"><input type="checkbox" id="selectAllCheckbox" class="h-4 w-4 text-primary-dark focus:ring-primary-dark border-gray-300 rounded"></th>
                                 <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider cursor-pointer" data-sort="name">Name</th>
-                                <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider cursor-pointer" data-sort="quantity">Quantity</th>
-                                <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider cursor-pointer" data-sort="location">Location</th>
-                                <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider cursor-pointer" data-sort="dateAdded">Added</th>
+                                <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider cursor-pointer" data-sort="amountRemaining">Amount Remaining</th>
                                 <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider cursor-pointer" data-sort="spoilage">Spoilage in</th>
+                                <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider cursor-pointer" data-sort="dateAdded">Added</th>
+                                <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider cursor-pointer" data-sort="location">Location</th>
                             </tr>
                         </thead>
                         <tbody id="inventory-table-body"></tbody>
@@ -623,6 +623,9 @@
                             const bDaysSinceAdded = Math.floor((new Date() - new Date(b.dateAdded)) / (1000 * 60 * 60 * 24));
                             aVal = a.perishableDays !== null && a.perishableDays !== undefined ? (a.perishableDays - aDaysSinceAdded) : Infinity; // Treat N/A as very far away
                             bVal = b.perishableDays !== null && b.perishableDays !== undefined ? (b.perishableDays - bDaysSinceAdded) : Infinity;
+                        } else if (this.sortConfig.key === 'amountRemaining') {
+                            aVal = a.isDiscrete ? a.quantity : a.remainingRatio;
+                            bVal = b.isDiscrete ? b.quantity : b.remainingRatio;
                         } else {
                             aVal = a[this.sortConfig.key];
                             bVal = b[this.sortConfig.key];
@@ -661,10 +664,20 @@
                         row.innerHTML = `
                             <td class="p-4"><input type="checkbox" class="item-checkbox h-4 w-4 text-primary-dark focus:ring-primary-dark border-gray-300 rounded" data-id="${item.id}" ${isSelected ? 'checked' : ''}></td>
                             <td class="p-4">${item.name}</td>
-                            <td class="p-4">${item.quantity} ${item.unit || ''}</td>
-                            <td class="p-4">${item.location}</td>
+                            <td class="p-4">
+                                ${item.isDiscrete ? 
+                                    `<span>${item.quantity}</span>` : 
+                                    `<div class="flex items-center">
+                                        <div class="w-24 bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                                            <div class="bg-blue-600 h-2.5 rounded-full" style="width: ${item.remainingRatio * 100}%" title="${(item.remainingRatio * 100).toFixed(0)}% Remaining"></div>
+                                        </div>
+                                        <span class="text-sm ml-2">${(item.remainingRatio * 100).toFixed(0)}%</span>
+                                    </div>`
+                                }
+                            </td>
+                            <td class="p-4">${expiryText}</td>
                             <td class="p-4">${daysSinceAdded} days ago</td>
-                            <td class="p-4">${expiryText}</td>`;
+                            <td class="p-4">${item.location}</td>`;
                         this.tableBody.appendChild(row);
                     });
                 },
