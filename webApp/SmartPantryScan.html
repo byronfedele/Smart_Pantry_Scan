@@ -149,13 +149,21 @@
                     <label for="itemName" class="block text-sm font-medium mb-1">Item Name</label>
                     <input type="text" id="itemName" required class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
                 </div>
-                <div class="mb-4">
+                <div id="continuousQuantityInput" class="mb-4">
                     <label for="itemQuantityNumeric" class="block text-sm font-medium mb-1">Quantity</label>
                     <input type="number" id="itemQuantityNumeric" required min="0" class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
                 </div>
-                <div class="mb-4">
+                <div id="itemUnitInput" class="mb-4">
                     <label for="itemUnit" class="block text-sm font-medium mb-1">Unit</label>
                     <input type="text" id="itemUnit" class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
+                </div>
+                <div id="discreteQuantityCounter" class="mb-4 hidden">
+                    <label for="discreteItemQuantity" class="block text-sm font-medium mb-1">Number of Items</label>
+                    <div class="flex items-center space-x-2">
+                        <button type="button" id="decrementDiscreteQuantity" class="p-2 bg-gray-200 dark:bg-gray-700 rounded-md text-neutral-dark dark:text-neutral-light custom-focus-ring">-</button>
+                        <input type="number" id="discreteItemQuantity" min="0" value="1" class="w-20 p-2 text-center rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
+                        <button type="button" id="incrementDiscreteQuantity" class="p-2 bg-gray-200 dark:bg-gray-700 rounded-md text-neutral-dark dark:text-neutral-light custom-focus-ring">+</button>
+                    </div>
                 </div>
                 <div class="mb-4 flex items-center">
                     <input type="checkbox" id="isDiscrete" class="mr-2 h-4 w-4 text-primary-dark focus:ring-primary-dark border-gray-300 rounded">
@@ -290,6 +298,12 @@
                     this.barcodeVideo = document.getElementById('barcodeVideo');
                     this.barcodeStatusEl = document.getElementById('barcodeStatus');
                     this.isDiscrete = document.getElementById('isDiscrete');
+                    this.continuousQuantityInput = document.getElementById('continuousQuantityInput');
+                    this.itemUnitInput = document.getElementById('itemUnitInput');
+                    this.discreteQuantityCounter = document.getElementById('discreteQuantityCounter');
+                    this.discreteItemQuantity = document.getElementById('discreteItemQuantity');
+                    this.decrementDiscreteQuantity = document.getElementById('decrementDiscreteQuantity');
+                    this.incrementDiscreteQuantity = document.getElementById('incrementDiscreteQuantity');
                     this.remainingQuantitySliderContainer = document.getElementById('remainingQuantitySliderContainer');
                     this.remainingRatio = document.getElementById('remainingRatio');
                     this.remainingRatioValue = document.getElementById('remainingRatioValue');
@@ -327,12 +341,32 @@
                     this.showExpiringSoonCheckbox.addEventListener('change', (e) => this.handleFilterChange(e));
                     this.expiringDaysInput.addEventListener('input', (e) => this.handleFilterChange(e));
 
-                    // New event listeners for remaining quantity slider
+                    // New event listeners for remaining quantity slider and discrete item quantity
                     this.isDiscrete.addEventListener('change', () => {
-                        this.remainingQuantitySliderContainer.style.display = this.isDiscrete.checked ? 'none' : 'block';
+                        if (this.isDiscrete.checked) {
+                            this.continuousQuantityInput.classList.add('hidden');
+                            this.itemUnitInput.classList.add('hidden');
+                            this.discreteQuantityCounter.classList.remove('hidden');
+                            this.remainingQuantitySliderContainer.style.display = 'none';
+                        } else {
+                            this.continuousQuantityInput.classList.remove('hidden');
+                            this.itemUnitInput.classList.remove('hidden');
+                            this.discreteQuantityCounter.classList.add('hidden');
+                            this.remainingQuantitySliderContainer.style.display = 'block';
+                        }
                     });
                     this.remainingRatio.addEventListener('input', () => {
                         this.remainingRatioValue.textContent = `${this.remainingRatio.value}%`;
+                    });
+                    this.decrementDiscreteQuantity.addEventListener('click', () => {
+                        let currentValue = parseInt(this.discreteItemQuantity.value, 10);
+                        if (currentValue > 0) {
+                            this.discreteItemQuantity.value = currentValue - 1;
+                        }
+                    });
+                    this.incrementDiscreteQuantity.addEventListener('click', () => {
+                        let currentValue = parseInt(this.discreteItemQuantity.value, 10);
+                        this.discreteItemQuantity.value = currentValue + 1;
                     });
                 },
 
@@ -400,19 +434,37 @@
                     itemBarcodeInput.value = item ? item.barcode : '';
                     if (item) {
                         document.getElementById('itemName').value = item.name;
-                        document.getElementById('itemQuantityNumeric').value = item.quantity;
-                        document.getElementById('itemUnit').value = item.unit || '';
                         document.getElementById('itemLocation').value = item.location;
                         document.getElementById('isDiscrete').checked = item.isDiscrete || false;
-                        // Set slider value and visibility
-                        this.remainingRatio.value = (item.remainingRatio !== undefined) ? (item.remainingRatio * 100) : 100;
-                        this.remainingRatioValue.textContent = `${this.remainingRatio.value}%`;
-                        this.remainingQuantitySliderContainer.style.display = item.isDiscrete ? 'none' : 'block';
+
+                        if (item.isDiscrete) {
+                            this.continuousQuantityInput.classList.add('hidden');
+                            this.itemUnitInput.classList.add('hidden');
+                            this.discreteQuantityCounter.classList.remove('hidden');
+                            this.discreteItemQuantity.value = item.quantity;
+                            this.remainingQuantitySliderContainer.style.display = 'none';
+                        } else {
+                            this.continuousQuantityInput.classList.remove('hidden');
+                            this.itemUnitInput.classList.remove('hidden');
+                            this.discreteQuantityCounter.classList.add('hidden');
+                            document.getElementById('itemQuantityNumeric').value = item.quantity;
+                            document.getElementById('itemUnit').value = item.unit || '';
+                            this.remainingRatio.value = (item.remainingRatio !== undefined) ? (item.remainingRatio * 100) : 100;
+                            this.remainingRatioValue.textContent = `${this.remainingRatio.value}%`;
+                            this.remainingQuantitySliderContainer.style.display = 'block';
+                        }
+
                         this.dateAddedInput.value = item.dateAdded ? item.dateAdded.split('T')[0] : '';
                         this.perishableDaysInput.value = item.perishableDays || '';
                         this.deleteItemBtn.classList.remove('hidden'); // Show delete button for existing items
                     } else {
-                        // For new items, ensure slider is visible and set to 100% by default
+                        // For new items, default to continuous input visible, discrete hidden
+                        document.getElementById('isDiscrete').checked = false;
+                        this.continuousQuantityInput.classList.remove('hidden');
+                        this.itemUnitInput.classList.remove('hidden');
+                        this.discreteQuantityCounter.classList.add('hidden');
+                        document.getElementById('itemQuantityNumeric').value = 1; // Default quantity for new continuous item
+                        document.getElementById('itemUnit').value = '';
                         this.remainingRatio.value = 100;
                         this.remainingRatioValue.textContent = '100%';
                         this.remainingQuantitySliderContainer.style.display = 'block';
@@ -432,13 +484,29 @@
                 handleFormSubmit(e) {
                     e.preventDefault();
                     const id = document.getElementById('itemId').value;
+                    const isDiscrete = document.getElementById('isDiscrete').checked;
+
+                    let quantityValue;
+                    let unitValue;
+                    let remainingRatioValue;
+
+                    if (isDiscrete) {
+                        quantityValue = parseInt(this.discreteItemQuantity.value, 10);
+                        unitValue = ''; // Discrete items don't typically have units like 'Liters'
+                        remainingRatioValue = 1; // Discrete items are either there or not, so remaining is always 100%
+                    } else {
+                        quantityValue = parseInt(document.getElementById('itemQuantityNumeric').value, 10);
+                        unitValue = document.getElementById('itemUnit').value;
+                        remainingRatioValue = (parseInt(document.getElementById('remainingRatio').value, 10) / 100);
+                    }
+
                     const newItem = {
                         barcode: document.getElementById('itemBarcode').value,
                         name: document.getElementById('itemName').value,
-                        quantity: parseInt(document.getElementById('itemQuantityNumeric').value, 10),
-                        unit: document.getElementById('itemUnit').value,
-                        isDiscrete: document.getElementById('isDiscrete').checked,
-                        remainingRatio: document.getElementById('isDiscrete').checked ? 1 : (parseInt(document.getElementById('remainingRatio').value, 10) / 100),
+                        quantity: quantityValue,
+                        unit: unitValue,
+                        isDiscrete: isDiscrete,
+                        remainingRatio: remainingRatioValue,
                         location: document.getElementById('itemLocation').value,
                         dateAdded: new Date(document.getElementById('dateAddedInput').value).toISOString(),
                         perishableDays: parseInt(document.getElementById('perishableDaysInput').value, 10) || null,
