@@ -94,6 +94,13 @@
                             <input type="checkbox" id="showSpoiled" class="mr-2 h-4 w-4 text-primary-dark focus:ring-primary-dark border-gray-300 rounded">
                             <label for="showSpoiled" class="text-sm font-medium text-neutral-dark dark:text-neutral-light">Show Spoiled</label>
                         </div>
+
+                        <div class="flex items-center">
+                            <input type="checkbox" id="showExpiringSoon" class="mr-2 h-4 w-4 text-primary-dark focus:ring-primary-dark border-gray-300 rounded">
+                            <label for="showExpiringSoon" class="text-sm font-medium text-neutral-dark dark:text-neutral-light">Expiring in</label>
+                            <input type="number" id="expiringDays" value="3" min="1" class="ml-2 w-16 p-1 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring text-center">
+                            <span class="ml-1 text-sm font-medium text-neutral-dark dark:text-neutral-light">days</span>
+                        </div>
                     </div>
                     <div class="mt-4 flex justify-end">
                         <button id="clearAllFiltersBtn" class="bg-error hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-300 custom-focus-ring">
@@ -240,6 +247,8 @@
                 selectedItems: [],
                 selectedLocationFilters: [], // New array to store selected locations
                 showSpoiled: false,
+                showExpiringSoon: false,
+                expiringDays: 3,
 
                 init() {
                     this.initDOMElements();
@@ -289,6 +298,8 @@
                     this.clearAllFiltersBtn = document.getElementById('clearAllFiltersBtn');
                     this.deleteItemBtn = document.getElementById('deleteItemBtn');
                     this.showSpoiledCheckbox = document.getElementById('showSpoiled');
+                    this.showExpiringSoonCheckbox = document.getElementById('showExpiringSoon');
+                    this.expiringDaysInput = document.getElementById('expiringDays');
                 },
 
                 addEventListeners() {
@@ -313,6 +324,8 @@
                     this.clearAllFiltersBtn.addEventListener('click', () => this.clearAllFilters());
                     this.deleteItemBtn.addEventListener('click', () => this.openConfirmModal(document.getElementById('itemId').value));
                     this.showSpoiledCheckbox.addEventListener('change', (e) => this.handleFilterChange(e));
+                    this.showExpiringSoonCheckbox.addEventListener('change', (e) => this.handleFilterChange(e));
+                    this.expiringDaysInput.addEventListener('input', (e) => this.handleFilterChange(e));
 
                     // New event listeners for remaining quantity slider
                     this.isDiscrete.addEventListener('change', () => {
@@ -502,6 +515,10 @@
                         }
                     } else if (target.matches('#showSpoiled')) {
                         this.showSpoiled = target.checked;
+                    } else if (target.matches('#showExpiringSoon')) {
+                        this.showExpiringSoon = target.checked;
+                    } else if (target.matches('#expiringDays')) {
+                        this.expiringDays = parseInt(target.value, 10);
                     }
                     this.currentPage = 1;
                     this.render();
@@ -522,10 +539,12 @@
                         const daysSinceAdded = Math.floor((new Date() - new Date(item.dateAdded)) / (1000 * 60 * 60 * 24));
                         const daysRemaining = item.perishableDays !== null && item.perishableDays !== undefined ? (item.perishableDays - daysSinceAdded) : null;
                         const isSpoiled = daysRemaining !== null && daysRemaining <= 0;
+                        const isExpiringSoon = this.showExpiringSoon && daysRemaining !== null && daysRemaining > 0 && daysRemaining <= this.expiringDays;
 
                         return item.name.toLowerCase().includes(searchTerm) &&
                             (this.selectedLocationFilters.length === 0 || this.selectedLocationFilters.includes(item.location)) &&
-                            (!this.showSpoiled || isSpoiled);
+                            (!this.showSpoiled || isSpoiled) &&
+                            (!this.showExpiringSoon || isExpiringSoon);
                     });
 
                     this.filteredInventory.sort((a, b) => {
