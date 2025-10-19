@@ -110,7 +110,6 @@
                                 <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider cursor-pointer" data-sort="location">Location</th>
                                 <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider cursor-pointer" data-sort="dateAdded">Added</th>
                                 <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider cursor-pointer" data-sort="spoilage">Spoilage in</th>
-                                <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="inventory-table-body"></tbody>
@@ -167,9 +166,14 @@
                     <label for="perishableDaysInput" class="block text-sm font-medium mb-1">Perishable (days)</label>
                     <input type="number" id="perishableDaysInput" min="0" class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
                 </div>
-                <div class="flex justify-end space-x-4">
-                    <button type="button" id="cancelBtn" class="py-2 px-4 rounded-lg bg-neutral-light dark:bg-neutral-dark">Cancel</button>
-                    <button type="submit" id="saveBtn" class="py-2 px-6 rounded-lg bg-primary-dark text-white font-bold">Save</button>
+                <div class="flex justify-between space-x-4">
+                    <div>
+                        <button type="button" id="deleteItemBtn" class="py-2 px-4 rounded-lg bg-error text-white font-bold hidden">Delete</button>
+                    </div>
+                    <div class="flex space-x-4">
+                        <button type="button" id="cancelBtn" class="py-2 px-4 rounded-lg bg-neutral-light dark:bg-neutral-dark">Cancel</button>
+                        <button type="submit" id="saveBtn" class="py-2 px-6 rounded-lg bg-primary-dark text-white font-bold">Save</button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -277,6 +281,7 @@
                     this.dateAddedInput = document.getElementById('dateAddedInput');
                     this.perishableDaysInput = document.getElementById('perishableDaysInput');
                     this.clearAllFiltersBtn = document.getElementById('clearAllFiltersBtn');
+                    this.deleteItemBtn = document.getElementById('deleteItemBtn');
                 },
 
                 addEventListeners() {
@@ -299,6 +304,7 @@
                     this.filterInputs.forEach(input => input.addEventListener('input', (e) => this.handleFilterChange(e)));
                     this.locationFiltersContainer.addEventListener('change', (e) => this.handleFilterChange(e));
                     this.clearAllFiltersBtn.addEventListener('click', () => this.clearAllFilters());
+                    this.deleteItemBtn.addEventListener('click', () => this.openConfirmModal(document.getElementById('itemId').value));
 
                     // New event listeners for remaining quantity slider
                     this.isDiscrete.addEventListener('change', () => {
@@ -383,6 +389,7 @@
                         this.remainingQuantitySliderContainer.style.display = item.isDiscrete ? 'none' : 'block';
                         this.dateAddedInput.value = item.dateAdded ? item.dateAdded.split('T')[0] : '';
                         this.perishableDaysInput.value = item.perishableDays || '';
+                        this.deleteItemBtn.classList.remove('hidden'); // Show delete button for existing items
                     } else {
                         // For new items, ensure slider is visible and set to 100% by default
                         this.remainingRatio.value = 100;
@@ -390,11 +397,13 @@
                         this.remainingQuantitySliderContainer.style.display = 'block';
                         this.dateAddedInput.valueAsDate = new Date(); // Default to current date for new item
                         this.perishableDaysInput.value = ''; // Clear for new item, LLM will suggest
+                        this.deleteItemBtn.classList.add('hidden'); // Hide delete button for new items
                     }
                     this.openModal(this.itemModal);
                 },
                 
                 openConfirmModal(id) {
+                    console.log('openConfirmModal called with ID:', id);
                     this.itemToDeleteId = id;
                     this.openModal(this.confirmModal);
                 },
@@ -428,25 +437,26 @@
                 },
 
                 handleDelete() {
-                    this.inventory = this.inventory.filter(item => item.id !== this.itemToDeleteId);
+                    console.log('Attempting to delete item with ID:', this.itemToDeleteId);
+                    const idToDelete = parseInt(this.itemToDeleteId, 10);
+                    this.inventory = this.inventory.filter(item => item.id !== idToDelete);
                     this.saveInventory();
                     this.render();
                     this.closeModal(this.confirmModal);
+                    this.closeModal(this.itemModal); // Close the itemModal after deletion
                 },
                 
                 handleTableActions(e) {
-                    const editBtn = e.target.closest('.edit-btn');
-                    if (editBtn) {
-                        const item = this.inventory.find(i => i.id == editBtn.dataset.id);
-                        if (item) this.openItemForm(item);
-                    }
-                    const deleteBtn = e.target.closest('.delete-btn');
-                    if (deleteBtn) {
-                        this.openConfirmModal(parseInt(deleteBtn.dataset.id, 10));
-                    }
                     const itemCheckbox = e.target.closest('.item-checkbox');
                     if (itemCheckbox) {
                         this.handleItemCheckboxChange(parseInt(itemCheckbox.dataset.id, 10), itemCheckbox.checked);
+                        return; // Prevent row click from firing if checkbox is clicked
+                    }
+
+                    const row = e.target.closest('tr[data-id]');
+                    if (row) {
+                        const item = this.inventory.find(i => i.id == row.dataset.id);
+                        if (item) this.openItemForm(item);
                     }
                 },
                 
@@ -528,7 +538,8 @@
                     
                     pageItems.forEach(item => {
                         const row = document.createElement('tr');
-                        row.className = 'border-b border-secondary-light dark:border-tertiary-dark';
+                        row.className = 'border-b border-secondary-light dark:border-tertiary-dark hover:bg-secondary-light dark:hover:bg-tertiary-dark cursor-pointer';
+                        row.dataset.id = item.id; // Add data-id to the row
                         const isSelected = this.selectedItems.includes(item.id);
                         const daysSinceAdded = Math.floor((new Date() - new Date(item.dateAdded)) / (1000 * 60 * 60 * 24));
                         const daysRemaining = item.perishableDays !== null && item.perishableDays !== undefined ? (item.perishableDays - daysSinceAdded) : null;
@@ -551,15 +562,7 @@
                             <td class="p-4">${item.quantity} ${item.unit || ''}</td>
                             <td class="p-4">${item.location}</td>
                             <td class="p-4">${daysSinceAdded} days ago</td>
-                            <td class="p-4">${expiryText}</td>
-                            <td class="p-4 whitespace-nowrap">
-                                <button class="edit-btn p-2 text-tertiary-dark dark:text-tertiary-light hover:text-primary-dark dark:hover:text-primary-light" data-id="${item.id}" title="Edit">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg>
-                                </button>
-                                <button class="delete-btn p-2 text-error hover:text-red-700" data-id="${item.id}" title="Delete">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
-                                </button>
-                            </td>`;
+                            <td class="p-4">${expiryText}</td>`;
                         this.tableBody.appendChild(row);
                     });
                 },
