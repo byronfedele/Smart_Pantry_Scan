@@ -142,6 +142,12 @@
     <div id="itemModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
         <div class="bg-primary-light dark:bg-secondary-dark rounded-lg shadow-xl w-full max-w-md p-6 modal-enter">
             <h2 id="modalTitle" class="text-2xl font-bold mb-4 text-primary-dark dark:text-primary-light">Add New Item</h2>
+            <button id="scanBarcodeInFormBtn" class="flex items-center justify-center w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-300 custom-focus-ring mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M2 6h2v12H2V6zm3 0h1v12H5V6zm2 0h2v12H7V6zm3 0h1v12h-1V6zm2 0h2v12h-2V6zm3 0h1v12h-1V6zm2 0h3v12h-3V6z"/>
+                </svg>
+                <span>Scan Barcode</span>
+            </button>
             <form id="itemForm">
                 <input type="hidden" id="itemId">
                 <input type="hidden" id="itemBarcode">
@@ -262,11 +268,6 @@
         <button id="deleteSelectedBtn" class="flex items-center bg-error hover:bg-red-700 text-white font-bold py-3 px-5 rounded-full shadow-lg transition-all duration-300 custom-focus-ring hidden">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
         </button>
-        <button id="scanBarcodeBtn" class="flex items-center bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-5 rounded-full shadow-lg transition-all duration-300 custom-focus-ring">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M2 6h2v12H2V6zm3 0h1v12H5V6zm2 0h2v12H7V6zm3 0h1v12h-1V6zm2 0h2v12h-2V6zm3 0h1v12h-1V6zm2 0h3v12h-3V6z"/>
-            </svg>
-        </button>
         <button id="addItemBtn" class="flex items-center bg-primary-dark hover:bg-tertiary-dark text-white font-bold py-3 px-5 rounded-full shadow-lg transition-all duration-300 custom-focus-ring">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
         </button>
@@ -299,7 +300,7 @@
                 initDOMElements() {
                     this.themeToggle = document.getElementById('theme-toggle');
                     this.addItemBtn = document.getElementById('addItemBtn');
-                    this.scanBarcodeBtn = document.getElementById('scanBarcodeBtn');
+                    this.scanBarcodeInFormBtn = document.getElementById('scanBarcodeInFormBtn'); // New
                     this.itemModal = document.getElementById('itemModal');
                     this.scanModal = document.getElementById('scanModal');
                     this.barcodeScanModal = document.getElementById('barcodeScanModal');
@@ -355,7 +356,7 @@
                 addEventListeners() {
                     this.themeToggle.addEventListener('click', () => this.toggleTheme());
                     this.addItemBtn.addEventListener('click', () => this.openItemForm());
-                    this.scanBarcodeBtn.addEventListener('click', () => window.barcodeScannerApp.startScan());
+                    this.scanBarcodeInFormBtn.addEventListener('click', () => window.barcodeScannerApp.startScan()); // New
                     this.cancelBtn.addEventListener('click', () => this.closeModal(this.itemModal));
                     this.cancelBarcodeScanBtn.addEventListener('click', () => window.barcodeScannerApp.stopScan());
                     this.toggleFlashlightBtn.addEventListener('click', () => window.barcodeScannerApp.toggleFlashlight());
@@ -545,6 +546,7 @@
                 openItemForm(item = null) {
                     this.itemForm.reset();
                     document.getElementById('modalTitle').textContent = item ? 'Edit Item' : 'Add New Item';
+                    this.scanBarcodeInFormBtn.classList.remove('hidden'); // Ensure button is visible when form opens
                     const itemIdInput = document.getElementById('itemId');
                     const itemBarcodeInput = document.getElementById('itemBarcode');
                     itemIdInput.value = item ? item.id : '';
