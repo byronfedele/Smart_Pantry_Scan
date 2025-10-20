@@ -118,7 +118,7 @@
             </div>
 
             <!-- Inventory Table -->
-            <div class="bg-primary-light dark:bg-tertiary-dark rounded-lg shadow-lg overflow-hidden">
+            <div id="inventory-table-container" class="bg-primary-light dark:bg-tertiary-dark rounded-lg shadow-lg overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full min-w-[640px]">
                         <thead class="bg-secondary-light dark:bg-tertiary-dark">
@@ -138,6 +138,11 @@
                     <p class="text-lg font-medium">No items found.</p>
                     <p class="text-sm">Try adjusting your filters or add a new item.</p>
                 </div>
+            </div>
+
+            <!-- Inventory Cards (for mobile) -->
+            <div id="inventory-cards" class="grid grid-cols-1 gap-4 mt-6 hidden">
+                <!-- Cards will be rendered here -->
             </div>
 
             <!-- Pagination -->
@@ -311,6 +316,8 @@
                     this.itemQuantityNumeric = document.getElementById('itemQuantityNumeric');
                     this.itemUnit = document.getElementById('itemUnit');
                     this.tableBody = document.getElementById('inventory-table-body');
+                    this.inventoryTableContainer = document.getElementById('inventory-table-container'); // New
+                    this.inventoryCardsContainer = document.getElementById('inventory-cards'); // New
                     this.paginationContainer = document.getElementById('pagination');
                     this.filterInputs = document.querySelectorAll('#filters input, #filters select');
                     this.locationFiltersContainer = document.getElementById('locationFilters');
@@ -357,6 +364,7 @@
                     this.selectAllCheckbox.addEventListener('change', (e) => this.toggleAllCheckboxes(e.target.checked));
                     this.deleteSelectedBtn.addEventListener('click', () => this.openConfirmDeleteSelectedModal());
                     this.tableBody.addEventListener('click', (e) => this.handleTableActions(e));
+                    this.inventoryCardsContainer.addEventListener('click', (e) => this.handleCardActions(e)); // New
                     this.paginationContainer.addEventListener('click', (e) => this.handlePaginationClick(e));
                     document.querySelector('thead').addEventListener('click', (e) => this.handleSort(e));
                     this.filterInputs.forEach(input => input.addEventListener('input', (e) => this.handleFilterChange(e)));
@@ -594,6 +602,21 @@
                         if (item) this.openItemForm(item);
                     }
                 },
+
+                handleCardActions(e) {
+                    console.log('handleCardActions called');
+                    const itemCheckbox = e.target.closest('.item-checkbox');
+                    if (itemCheckbox) {
+                        this.handleItemCheckboxChange(parseInt(itemCheckbox.dataset.id, 10), itemCheckbox.checked);
+                        return; // Prevent card click from firing if checkbox is clicked
+                    }
+
+                    const card = e.target.closest('.bg-primary-light.dark\\:bg-tertiary-dark.rounded-lg.shadow-md.p-4.relative.cursor-pointer');
+                    if (card) {
+                        const item = this.inventory.find(i => i.id == card.dataset.id);
+                        if (item) this.openItemForm(item);
+                    }
+                },
                 
                 handlePaginationClick(e) {
                     const pageBtn = e.target.closest('.page-btn');
@@ -639,8 +662,20 @@
                 },
 
                 render() {
+                    console.log('render called');
                     this.applyFiltersAndSort();
-                    this.renderTable();
+                    const isMobileView = window.innerWidth < 768; // Define breakpoint for mobile view
+                    console.log('isMobileView:', isMobileView, 'window.innerWidth:', window.innerWidth);
+
+                    if (isMobileView) {
+                        this.inventoryTableContainer.classList.add('hidden');
+                        this.inventoryCardsContainer.classList.remove('hidden');
+                        this.renderCards();
+                    } else {
+                        this.inventoryTableContainer.classList.remove('hidden');
+                        this.inventoryCardsContainer.classList.add('hidden');
+                        this.renderTable();
+                    }
                     this.renderPagination();
                     this.renderLocationFilters();
                     this.renderLocationDatalist();
@@ -724,6 +759,64 @@
                             <td class="p-4 hidden-sm">${new Date(item.dateAdded).toLocaleDateString()}</td>
                             <td class="p-4 hidden-sm">${item.location}</td>`;
                         this.tableBody.appendChild(row);
+                    });
+                },
+
+                renderCards() {
+                    console.log('renderCards called');
+                    this.inventoryCardsContainer.innerHTML = '';
+                    const pageItems = this.filteredInventory.slice((this.currentPage - 1) * this.itemsPerPage, this.currentPage * this.itemsPerPage);
+                    
+                    if (pageItems.length === 0) {
+                        this.inventoryCardsContainer.classList.add('hidden');
+                        this.noResultsDiv.classList.remove('hidden');
+                        return;
+                    } else {
+                        this.inventoryCardsContainer.classList.remove('hidden');
+                        this.noResultsDiv.classList.add('hidden');
+                    }
+
+                    pageItems.forEach(item => {
+                        const isSelected = this.selectedItems.includes(item.id);
+                        const daysRemaining = item.perishableDate ? Math.floor((new Date(item.perishableDate) - new Date()) / (1000 * 60 * 60 * 24)) : null;
+                        let expiryText = '';
+                        if (daysRemaining !== null) {
+                            if (daysRemaining < 0) {
+                                expiryText = '<span class="text-red-500 font-bold">Expired!</span>';
+                            } else if (daysRemaining <= 3) {
+                                expiryText = `<span class="text-orange-500 font-bold">${daysRemaining} days left</span>`;
+                            } else {
+                                expiryText = `${daysRemaining} days left`;
+                            }
+                        } else {
+                            expiryText = 'N/A';
+                        }
+
+                        const card = document.createElement('div');
+                        card.className = 'bg-primary-light dark:bg-tertiary-dark rounded-lg shadow-md p-4 relative cursor-pointer';
+                        card.dataset.id = item.id;
+
+                        card.innerHTML = `
+                            <div class="absolute top-2 right-2">
+                                <input type="checkbox" class="item-checkbox h-4 w-4 text-primary-dark focus:ring-primary-dark border-gray-300 rounded" data-id="${item.id}" ${isSelected ? 'checked' : ''}>
+                            </div>
+                            <h3 class="text-lg font-semibold text-primary-dark dark:text-primary-light mb-1">${item.name}</h3>
+                            <p class="text-sm text-neutral-dark dark:text-neutral-light mb-2">Location: ${item.location}</p>
+                            <div class="mb-2">
+                                <span class="text-sm font-medium text-neutral-dark dark:text-neutral-light">Amount: </span>
+                                ${item.isDiscrete ? 
+                                    `<span>${item.quantity} ${item.unit || ''}</span>` : 
+                                    `<div class="flex items-center mt-1">
+                                        <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                                            <div class="bg-blue-600 h-2.5 rounded-full" style="width: ${item.remainingRatio * 100}%" title="${(item.remainingRatio * 100).toFixed(0)}% Remaining"></div>
+                                        </div>
+                                        <span class="text-sm ml-2">${(item.remainingRatio * 100).toFixed(0)}%</span>
+                                    </div>`
+                                }
+                            </div>
+                            <p class="text-sm text-neutral-dark dark:text-neutral-light">Spoilage: ${expiryText}</p>
+                        `;
+                        this.inventoryCardsContainer.appendChild(card);
                     });
                 },
 
