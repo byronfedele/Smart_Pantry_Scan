@@ -20,6 +20,13 @@
         .custom-focus-ring:focus { outline: none; box-shadow: 0 0 0 3px rgba(47, 59, 88, 0.5); }
         .dark .custom-focus-ring:focus { box-shadow: 0 0 0 3px rgba(186, 198, 234, 0.6); }
         #video, #canvas { max-width: 100%; border-radius: 0.5rem; }
+
+        @media (max-width: 768px) {
+            .hidden-sm { display: none; }
+            th, td {
+                padding: 0.5rem;
+            }
+        }
     </style>
     <script>
         tailwind.config = {
@@ -120,8 +127,8 @@
                                 <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider cursor-pointer" data-sort="name">Name</th>
                                 <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider cursor-pointer" data-sort="amountRemaining">Amount Remaining</th>
                                 <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider cursor-pointer" data-sort="spoilage">Spoilage in</th>
-                                <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider cursor-pointer" data-sort="dateAdded">Added</th>
-                                <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider cursor-pointer" data-sort="location">Location</th>
+                                <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider cursor-pointer hidden-sm" data-sort="dateAdded">Added</th>
+                                <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider cursor-pointer hidden-sm" data-sort="location">Location</th>
                             </tr>
                         </thead>
                         <tbody id="inventory-table-body"></tbody>
@@ -708,8 +715,8 @@
                                 }
                             </td>
                             <td class="p-4">${expiryText}</td>
-                            <td class="p-4">${new Date(item.dateAdded).toLocaleDateString()}</td>
-                            <td class="p-4">${item.location}</td>`;
+                            <td class="p-4 hidden-sm">${new Date(item.dateAdded).toLocaleDateString()}</td>
+                            <td class="p-4 hidden-sm">${item.location}</td>`;
                         this.tableBody.appendChild(row);
                     });
                 },
