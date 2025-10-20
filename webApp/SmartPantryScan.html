@@ -403,6 +403,12 @@
                 clearAllFilters() {
                     document.getElementById('search').value = '';
                     this.selectedLocationFilters = [];
+                    this.showSpoiled = false;
+                    this.showExpiringSoon = false;
+                    this.expiringDays = 3;
+                    document.getElementById('showSpoiled').checked = false;
+                    document.getElementById('showExpiringSoon').checked = false;
+                    document.getElementById('expiringDays').value = 3;
                     this.currentPage = 1;
                     this.render();
                 },
