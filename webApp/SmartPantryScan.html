@@ -140,7 +140,7 @@
 
     <!-- Add/Edit Item Modal -->
     <div id="itemModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-primary-light dark:bg-secondary-dark rounded-lg shadow-xl w-full max-w-md p-6 modal-enter">
+        <div class="bg-primary-light dark:bg-secondary-dark rounded-lg shadow-xl w-full max-w-md sm:max-w-lg p-4 sm:p-6 modal-enter flex flex-col max-h-full">
             <h2 id="modalTitle" class="text-2xl font-bold mb-4 text-primary-dark dark:text-primary-light">Add New Item</h2>
             <button id="scanBarcodeInFormBtn" class="flex items-center justify-center w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-300 custom-focus-ring mb-4">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
@@ -148,7 +148,7 @@
                 </svg>
                 <span>Scan Barcode</span>
             </button>
-            <form id="itemForm">
+            <form id="itemForm" class="overflow-y-auto">
                 <input type="hidden" id="itemId">
                 <input type="hidden" id="itemBarcode">
                 <input type="hidden" id="itemUrl">
@@ -193,8 +193,7 @@
                     <input type="date" id="dateAddedInput" required class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
                 </div>
                 <div class="mb-6">
-                    <label for="perishableDateInput" class="block text-sm font-medium mb-1">Perishable Date</label>
-                    <div class="flex items-center space-x-2">
+                    <div class="flex items-center flex-wrap gap-2">
                         <input type="date" id="perishableDateInput" class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
                         <button type="button" id="quickAdd3Days" class="p-2 bg-gray-200 dark:bg-gray-700 rounded-md text-sm custom-focus-ring whitespace-nowrap">+3 Days</button>
                         <button type="button" id="quickAdd7Days" class="p-2 bg-gray-200 dark:bg-gray-700 rounded-md text-sm custom-focus-ring whitespace-nowrap">+7 Days</button>
