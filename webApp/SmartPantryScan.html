@@ -140,14 +140,21 @@
 
     <!-- Add/Edit Item Modal -->
     <div id="itemModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-primary-light dark:bg-secondary-dark rounded-lg shadow-xl w-full max-w-md sm:max-w-lg p-4 sm:p-6 modal-enter flex flex-col max-h-full">
-            <h2 id="modalTitle" class="text-2xl font-bold mb-4 text-primary-dark dark:text-primary-light">Add New Item</h2>
-            <button id="scanBarcodeInFormBtn" class="flex items-center justify-center w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-300 custom-focus-ring mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M2 6h2v12H2V6zm3 0h1v12H5V6zm2 0h2v12H7V6zm3 0h1v12h-1V6zm2 0h2v12h-2V6zm3 0h1v12h-1V6zm2 0h3v12h-3V6z"/>
-                </svg>
-                <span>Scan Barcode</span>
-            </button>
+        <div class="bg-primary-light dark:bg-secondary-dark rounded-lg shadow-xl w-full max-w-md sm:max-w-lg px-4 pb-4 sm:px-6 sm:pb-6 modal-enter flex flex-col max-h-full">
+            <div class="sticky top-0 bg-primary-light dark:bg-secondary-dark z-10 pb-4 -mx-4 -mt-4 px-4 pt-4 rounded-t-lg">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 id="modalTitle" class="text-2xl font-bold text-primary-dark dark:text-primary-light">Add New Item</h2>
+                    <button id="closeItemModalBtn" class="p-2 rounded-full bg-secondary-light dark:bg-tertiary-dark text-primary-dark dark:text-primary-light custom-focus-ring transition-colors duration-300">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <button id="scanBarcodeInFormBtn" class="flex items-center justify-center w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-300 custom-focus-ring mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M2 6h2v12H2V6zm3 0h1v12H5V6zm2 0h2v12H7V6zm3 0h1v12h-1V6zm2 0h2v12h-2V6zm3 0h1v12h-1V6zm2 0h3v12h-3V6z"/>
+                    </svg>
+                    <span>Scan Barcode</span>
+                </button>
+            </div>
             <form id="itemForm" class="overflow-y-auto">
                 <input type="hidden" id="itemId">
                 <input type="hidden" id="itemBarcode">
@@ -193,6 +200,7 @@
                     <input type="date" id="dateAddedInput" required class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
                 </div>
                 <div class="mb-6">
+                    <label for="perishableDateInput" class="block text-sm font-medium mb-1">Perishable Date</label>
                     <div class="flex items-center flex-wrap gap-2">
                         <input type="date" id="perishableDateInput" class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
                         <button type="button" id="quickAdd3Days" class="p-2 bg-gray-200 dark:bg-gray-700 rounded-md text-sm custom-focus-ring whitespace-nowrap">+3 Days</button>
@@ -205,7 +213,6 @@
                         <button type="button" id="deleteItemBtn" class="py-2 px-4 rounded-lg bg-error text-white font-bold hidden">Delete</button>
                     </div>
                     <div class="flex space-x-4">
-                        <button type="button" id="cancelBtn" class="py-2 px-4 rounded-lg bg-neutral-light dark:bg-neutral-dark">Cancel</button>
                         <button type="submit" id="saveBtn" class="py-2 px-6 rounded-lg bg-primary-dark text-white font-bold">Save</button>
                     </div>
                 </div>
@@ -307,11 +314,7 @@
                     this.addItemBtn = document.getElementById('addItemBtn');
                     this.scanBarcodeInFormBtn = document.getElementById('scanBarcodeInFormBtn'); // New
                     this.itemModal = document.getElementById('itemModal');
-
-                    this.scanModal = document.getElementById('scanModal');
-                    this.barcodeScanModal = document.getElementById('barcodeScanModal');
-                    this.confirmModal = document.getElementById('confirmModal');
-                    this.cancelBtn = document.getElementById('cancelBtn');
+                    this.closeItemModalBtn = document.getElementById('closeItemModalBtn');
                     this.cancelScanBtn = document.getElementById('cancelScanBtn');
                     this.cancelBarcodeScanBtn = document.getElementById('cancelBarcodeScanBtn');
                     this.interactionModal = document.getElementById('interactionModal');
@@ -365,7 +368,7 @@
                     this.themeToggle.addEventListener('click', () => this.toggleTheme());
                     this.addItemBtn.addEventListener('click', () => this.openItemForm());
                     this.scanBarcodeInFormBtn.addEventListener('click', () => window.barcodeScannerApp.startScan()); // New
-                    this.cancelBtn.addEventListener('click', () => this.closeModal(this.itemModal));
+                    this.closeItemModalBtn.addEventListener('click', () => this.closeModal(this.itemModal));
                     this.cancelBarcodeScanBtn.addEventListener('click', () => window.barcodeScannerApp.stopScan());
                     this.toggleFlashlightBtn.addEventListener('click', () => window.barcodeScannerApp.toggleFlashlight());
                     this.itemForm.addEventListener('submit', (e) => this.handleFormSubmit(e));
