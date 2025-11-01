@@ -151,6 +151,10 @@
             <form id="itemForm">
                 <input type="hidden" id="itemId">
                 <input type="hidden" id="itemBarcode">
+                <input type="hidden" id="itemUrl">
+                <div class="mb-4">
+                    <img id="itemImage" src="" alt="Product Image" class="w-32 h-32 object-contain mx-auto rounded-lg mb-4">
+                </div>
                 <div class="mb-4">
                     <label for="itemName" class="block text-sm font-medium mb-1">Item Name</label>
                     <input type="text" id="itemName" required class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
@@ -238,6 +242,8 @@
         </div>
     </div>
 
+
+
     <!-- Barcode Scan Modal -->
     <div id="barcodeScanModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
         <div class="bg-primary-light dark:bg-secondary-dark rounded-lg shadow-xl w-full max-w-2xl p-6 modal-enter space-y-4">
@@ -302,6 +308,7 @@
                     this.addItemBtn = document.getElementById('addItemBtn');
                     this.scanBarcodeInFormBtn = document.getElementById('scanBarcodeInFormBtn'); // New
                     this.itemModal = document.getElementById('itemModal');
+
                     this.scanModal = document.getElementById('scanModal');
                     this.barcodeScanModal = document.getElementById('barcodeScanModal');
                     this.confirmModal = document.getElementById('confirmModal');
@@ -317,6 +324,8 @@
                     this.selectAllCheckbox = document.getElementById('selectAllCheckbox');
                     this.deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
                     this.itemForm = document.getElementById('itemForm');
+                    this.itemImage = document.getElementById('itemImage');
+                    this.itemUrl = document.getElementById('itemUrl');
                     this.itemQuantityNumeric = document.getElementById('itemQuantityNumeric');
                     this.itemUnit = document.getElementById('itemUnit');
                     this.tableBody = document.getElementById('inventory-table-body');
@@ -470,6 +479,7 @@
                     this.quickAdd3Days.addEventListener('click', () => this.handleQuickAdd(3, 'days'));
                     this.quickAdd7Days.addEventListener('click', () => this.handleQuickAdd(7, 'days'));
                     this.quickAdd1Month.addEventListener('click', () => this.handleQuickAdd(1, 'months'));
+
                 },
 
                 clearAllFilters() {
@@ -505,16 +515,16 @@
                     } else {
                         // Default food-related inventory items
                         this.inventory = [
-                            { id: 1, name: 'Milk', quantity: 1, unit: 'Liter', isDiscrete: false, remainingRatio: 0.75, location: 'Refrigerator', dateAdded: '2025-09-28T10:00:00Z', perishableDate: '2025-10-26T10:00:00Z' },
-                            { id: 2, name: 'Bananas', quantity: 6, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Counter', dateAdded: '2025-09-29T11:30:00Z', perishableDate: '2025-10-24T11:30:00Z' },
-                            { id: 3, name: 'Canned Tomatoes', quantity: 2, unit: 'cans', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-09-25T14:00:00Z', perishableDate: '2026-09-25T14:00:00Z' },
-                            { id: 4, name: 'Eggs', quantity: 12, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Refrigerator', dateAdded: '2025-09-20T09:00:00Z', perishableDate: '2025-10-11T09:00:00Z' },
-                            { id: 5, name: 'Bread', quantity: 1, unit: 'loaf', isDiscrete: false, remainingRatio: 0.5, location: 'Pantry', dateAdded: '2025-09-30T16:00:00Z', perishableDate: '2025-10-07T16:00:00Z' },
-                            { id: 6, name: 'Yogurt', quantity: 4, unit: 'cups', isDiscrete: true, remainingRatio: 1, location: 'Refrigerator', dateAdded: '2025-09-27T08:00:00Z', perishableDate: '2025-10-11T08:00:00Z' },
-                            { id: 7, name: 'Coffee Beans', quantity: 500, unit: 'grams', isDiscrete: false, remainingRatio: 0.8, location: 'Pantry', dateAdded: '2025-09-26T13:00:00Z', perishableDate: '2025-12-25T13:00:00Z' },
-                            { id: 8, name: 'Apples', quantity: 5, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Counter', dateAdded: '2025-09-24T10:00:00Z', perishableDate: '2025-10-08T10:00:00Z' },
-                            { id: 9, name: 'Cheese', quantity: 200, unit: 'grams', isDiscrete: false, remainingRatio: 0.6, location: 'Refrigerator', dateAdded: '2025-09-23T15:00:00Z', perishableDate: '2025-10-23T15:00:00Z' },
-                            { id: 10, name: 'Pasta', quantity: 1, unit: 'box', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-09-22T12:00:00Z', perishableDate: '2027-09-22T12:00:00Z' },
+                            { id: 1, name: 'Milk', quantity: 1, unit: 'Liter', isDiscrete: false, remainingRatio: 0.75, location: 'Refrigerator', dateAdded: '2025-09-28T10:00:00Z', perishableDate: '2025-10-26T10:00:00Z', imageSmallUrl: '', url: '' },
+                            { id: 2, name: 'Bananas', quantity: 6, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Counter', dateAdded: '2025-09-29T11:30:00Z', perishableDate: '2025-10-24T11:30:00Z', imageUrl: '', imageSmallUrl: '', url: '' },
+                            { id: 3, name: 'Canned Tomatoes', quantity: 2, unit: 'cans', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-09-25T14:00:00Z', perishableDate: '2026-09-25T14:00:00Z', imageUrl: '', imageSmallUrl: '', url: '' },
+                            { id: 4, name: 'Eggs', quantity: 12, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Refrigerator', dateAdded: '2025-09-20T09:00:00Z', perishableDate: '2025-10-11T09:00:00Z', imageUrl: '', imageSmallUrl: '', url: '' },
+                            { id: 5, name: 'Bread', quantity: 1, unit: 'loaf', isDiscrete: false, remainingRatio: 0.5, location: 'Pantry', dateAdded: '2025-09-30T16:00:00Z', perishableDate: '2025-10-07T16:00:00Z', imageUrl: '', imageSmallUrl: '', url: '' },
+                            { id: 6, name: 'Yogurt', quantity: 4, unit: 'cups', isDiscrete: true, remainingRatio: 1, location: 'Refrigerator', dateAdded: '2025-09-27T08:00:00Z', perishableDate: '2025-10-11T08:00:00Z', imageUrl: '', imageSmallUrl: '', url: '' },
+                            { id: 7, name: 'Coffee Beans', quantity: 500, unit: 'grams', isDiscrete: false, remainingRatio: 0.8, location: 'Pantry', dateAdded: '2025-09-26T13:00:00Z', perishableDate: '2025-12-25T13:00:00Z', imageUrl: '', imageSmallUrl: '', url: '' },
+                            { id: 8, name: 'Apples', quantity: 5, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Counter', dateAdded: '2025-09-24T10:00:00Z', perishableDate: '2025-10-08T10:00:00Z', imageUrl: '', imageSmallUrl: '', url: '' },
+                            { id: 9, name: 'Cheese', quantity: 200, unit: 'grams', isDiscrete: false, remainingRatio: 0.6, location: 'Refrigerator', dateAdded: '2025-09-23T15:00:00Z', perishableDate: '2025-10-23T15:00:00Z', imageUrl: '', imageSmallUrl: '', url: '' },
+                            { id: 10, name: 'Pasta', quantity: 1, unit: 'box', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-09-22T12:00:00Z', perishableDate: '2027-09-22T12:00:00Z', imageUrl: '', imageSmallUrl: '', url: '' },
                         ];
                     }
                 },
@@ -554,6 +564,14 @@
                     if (item) {
                         document.getElementById('itemName').value = item.name;
                         document.getElementById('itemLocation').value = item.location;
+                        document.getElementById('itemImage').src = item.imageSmallUrl || '';
+
+                        if (item.imageSmallUrl) {
+                            document.getElementById('itemImage').classList.remove('hidden');
+                        } else {
+                            document.getElementById('itemImage').classList.add('hidden');
+                        }
+                        document.getElementById('itemUrl').value = item.url || '';
                         document.getElementById('isDiscrete').checked = item.isDiscrete || false;
 
                         if (item.isDiscrete) {
@@ -578,6 +596,7 @@
                         this.deleteItemBtn.classList.remove('hidden'); // Show delete button for existing items
                     } else {
                         // For new items, default to continuous input visible, discrete hidden
+                        document.getElementById('itemImage').classList.add('hidden');
                         document.getElementById('isDiscrete').checked = false;
                         this.continuousQuantityInput.classList.remove('hidden');
                         this.itemUnitInput.classList.remove('hidden');
@@ -640,6 +659,8 @@
                         dateAdded: new Date(document.getElementById('dateAddedInput').value).toISOString(),
                         perishableDate: document.getElementById('perishableDateInput').value ? new Date(document.getElementById('perishableDateInput').value).toISOString() : null,
                         lastModified: new Date().toISOString(),
+                        imageSmallUrl: document.getElementById('itemImage').src,
+                        url: document.getElementById('itemUrl').value,
                     };
                     if (id) {
                         const index = this.inventory.findIndex(item => item.id == id);
@@ -1348,7 +1369,7 @@
                 async fetchAndOpenForm(barcode) {
                     const statusEl = document.getElementById('barcodeStatus');
                     statusEl.textContent = `Fetching data for ${barcode}...`;
-                    const apiUrl = `https://world.openfoodfacts.net/api/v2/product/${barcode}?fields=product_name,quantity,image_front_url`;
+                    const apiUrl = `https://world.openfoodfacts.net/api/v2/product/${barcode}?fields=product_name,quantity,image_front_url,image_small_url,url`;
 
                     try {
                         const response = await fetch(apiUrl);
@@ -1380,7 +1401,12 @@
                             document.getElementById('itemName').value = data.product.product_name || '';
                             document.getElementById('itemQuantityNumeric').value = parsedQuantity.quantity;
                             document.getElementById('itemUnit').value = parsedQuantity.unit;
-                            console.log('Product Image URL:', data.product.image_front_url);
+                            document.getElementById('itemImage').src = data.product.image_small_url || '';
+
+                            if (data.product.image_small_url) {
+                                document.getElementById('itemImage').classList.remove('hidden');
+                            }
+                            document.getElementById('itemUrl').value = data.product.url || '';
 
                             // Default perishable date to 7 days from now
                             const date = new Date();
