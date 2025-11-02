@@ -574,7 +574,11 @@
                 openItemForm(item = null) {
                     this.itemForm.reset();
                     document.getElementById('modalTitle').textContent = item ? 'Edit Item' : 'Add New Item';
-                    this.scanBarcodeInFormBtn.classList.remove('hidden'); // Ensure button is visible when form opens
+                    if (item) {
+                        this.scanBarcodeInFormBtn.classList.add('hidden'); // Hide button when editing existing item
+                    } else {
+                        this.scanBarcodeInFormBtn.classList.remove('hidden'); // Show button when adding new item
+                    }
                     const itemIdInput = document.getElementById('itemId');
                     const itemBarcodeInput = document.getElementById('itemBarcode');
                     itemIdInput.value = item ? item.id : '';
