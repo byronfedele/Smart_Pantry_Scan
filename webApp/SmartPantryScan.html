@@ -66,9 +66,9 @@
 
             <!-- Filters -->
             <div class="bg-primary-light dark:bg-tertiary-dark p-4 rounded-lg shadow-md mb-6">
-                <details open>
+                <details>
                     <summary class="font-semibold text-lg cursor-pointer text-primary-dark dark:text-primary-light flex justify-between items-center">
-                        <span>Filters & Search</span>
+                        <span>Organize & Filter</span>
                         <svg class="w-6 h-6 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </summary>
                     <div id="filters" class="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -93,6 +93,19 @@
                             <label for="showExpiringSoon" class="text-sm font-medium text-neutral-dark dark:text-neutral-light">Expiring in</label>
                             <input type="number" id="expiringDays" value="3" min="1" class="ml-2 w-16 p-1 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-neutral-light custom-focus-ring text-center">
                             <span class="ml-1 text-sm font-medium text-neutral-dark dark:text-neutral-light">days</span>
+                        </div>
+                        <div class="md:hidden">
+                            <label for="mobileSort" class="block text-sm font-medium text-neutral-dark dark:text-neutral-light mb-1">Sort by</label>
+                            <select id="mobileSort" class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-neutral-light custom-focus-ring">
+                                <option value="dateAdded_desc">Date Added (Newest)</option>
+                                <option value="dateAdded_asc">Date Added (Oldest)</option>
+                                <option value="spoilage_asc" selected>Spoilage in (Soonest)</option>
+                                <option value="spoilage_desc">Spoilage in (Latest)</option>
+                                <option value="amountRemaining_asc">Amount Remaining (Least)</option>
+                                <option value="amountRemaining_desc">Amount Remaining (Most)</option>
+                                <option value="name_asc">Name (A-Z)</option>
+                                <option value="name_desc">Name (Z-A)</option>
+                            </select>
                         </div>
                     </div>
                     <div class="mt-4 flex justify-end">
@@ -292,7 +305,7 @@
                 filteredInventory: [],
                 currentPage: 1,
                 itemsPerPage: 10,
-                sortConfig: { key: 'dateAdded', direction: 'desc' },
+                sortConfig: { key: 'spoilage', direction: 'asc' },
                 itemToDeleteId: null,
                 selectedItems: [],
                 selectedLocationFilters: [], // New array to store selected locations
@@ -362,6 +375,7 @@
                     this.showSpoiledCheckbox = document.getElementById('showSpoiled');
                     this.showExpiringSoonCheckbox = document.getElementById('showExpiringSoon');
                     this.expiringDaysInput = document.getElementById('expiringDays');
+                    this.mobileSort = document.getElementById('mobileSort');
                 },
 
                 addEventListeners() {
@@ -449,6 +463,8 @@
                     this.showSpoiledCheckbox.addEventListener('change', (e) => this.handleFilterChange(e));
                     this.showExpiringSoonCheckbox.addEventListener('change', (e) => this.handleFilterChange(e));
                     this.expiringDaysInput.addEventListener('input', (e) => this.handleFilterChange(e));
+                    this.mobileSort.addEventListener('change', (e) => this.handleMobileSort(e));
+                    window.addEventListener('resize', () => this.render());
 
                     // New event listeners for remaining quantity slider and discrete item quantity
                     this.isDiscrete.addEventListener('change', () => {
@@ -755,6 +771,13 @@
                     } else if (target.matches('#expiringDays')) {
                         this.expiringDays = parseInt(target.value, 10);
                     }
+                    this.currentPage = 1;
+                    this.render();
+                },
+
+                handleMobileSort(e) {
+                    const [key, direction] = e.target.value.split('_');
+                    this.sortConfig = { key, direction };
                     this.currentPage = 1;
                     this.render();
                 },
