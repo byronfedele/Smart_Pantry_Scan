@@ -216,9 +216,11 @@
                     <label for="perishableDateInput" class="block text-sm font-medium mb-1">Perishable Date</label>
                     <div class="flex items-center flex-wrap gap-2">
                         <input type="date" id="perishableDateInput" class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
-                        <button type="button" id="quickAdd3Days" class="p-2 bg-gray-200 dark:bg-gray-700 rounded-md text-sm custom-focus-ring whitespace-nowrap">+3 Days</button>
-                        <button type="button" id="quickAdd7Days" class="p-2 bg-gray-200 dark:bg-gray-700 rounded-md text-sm custom-focus-ring whitespace-nowrap">+7 Days</button>
-                        <button type="button" id="quickAdd1Month" class="p-2 bg-gray-200 dark:bg-gray-700 rounded-md text-sm custom-focus-ring whitespace-nowrap">+1 Month</button>
+                        <button type="button" id="quickAdd1Day" class="p-2 bg-blue-200 dark:bg-blue-800 rounded-md text-sm custom-focus-ring whitespace-nowrap">+1 Day</button>
+                        <button type="button" id="quickAdd7Days" class="p-2 bg-blue-200 dark:bg-blue-800 rounded-md text-sm custom-focus-ring whitespace-nowrap">+7 Days</button>
+                        <button type="button" id="quickAdd1Month" class="p-2 bg-blue-200 dark:bg-blue-800 rounded-md text-sm custom-focus-ring whitespace-nowrap">+1 Month</button>
+                        <button type="button" id="quickAdd1Year" class="p-2 bg-blue-200 dark:bg-blue-800 rounded-md text-sm custom-focus-ring whitespace-nowrap">+1 Year</button>
+                        <button type="button" id="resetPerishableDate" class="p-2 bg-gray-300 dark:bg-gray-600 rounded-md text-sm custom-focus-ring whitespace-nowrap">Reset</button>
                     </div>
                 </div>
                 <div class="flex justify-between space-x-4">
@@ -367,9 +369,11 @@
                     this.remainingRatioValue = document.getElementById('remainingRatioValue');
                     this.dateAddedInput = document.getElementById('dateAddedInput');
                     this.perishableDateInput = document.getElementById('perishableDateInput');
-                    this.quickAdd3Days = document.getElementById('quickAdd3Days');
+                    this.quickAdd1Day = document.getElementById('quickAdd1Day');
                     this.quickAdd7Days = document.getElementById('quickAdd7Days');
                     this.quickAdd1Month = document.getElementById('quickAdd1Month');
+                    this.quickAdd1Year = document.getElementById('quickAdd1Year');
+                    this.resetPerishableDate = document.getElementById('resetPerishableDate');
                     this.clearAllFiltersBtn = document.getElementById('clearAllFiltersBtn');
                     this.deleteItemBtn = document.getElementById('deleteItemBtn');
                     this.showSpoiledCheckbox = document.getElementById('showSpoiled');
@@ -494,9 +498,11 @@
                         this.discreteItemQuantity.value = currentValue + 1;
                     });
 
-                    this.quickAdd3Days.addEventListener('click', () => this.handleQuickAdd(3, 'days'));
+                    this.quickAdd1Day.addEventListener('click', () => this.handleQuickAdd(1, 'days'));
                     this.quickAdd7Days.addEventListener('click', () => this.handleQuickAdd(7, 'days'));
                     this.quickAdd1Month.addEventListener('click', () => this.handleQuickAdd(1, 'months'));
+                    this.quickAdd1Year.addEventListener('click', () => this.handleQuickAdd(1, 'years'));
+                    this.resetPerishableDate.addEventListener('click', () => this.handleResetPerishableDate());
 
                 },
 
@@ -583,6 +589,7 @@
                     const itemBarcodeInput = document.getElementById('itemBarcode');
                     itemIdInput.value = item ? item.id : '';
                     itemBarcodeInput.value = item ? item.barcode : '';
+                    this.currentItemDateAdded = item ? new Date(item.dateAdded) : new Date();
                     if (item) {
                         document.getElementById('itemName').value = item.name;
                         document.getElementById('itemLocation').value = item.location;
@@ -616,6 +623,11 @@
                         this.dateAddedInput.value = item.dateAdded ? item.dateAdded.split('T')[0] : '';
                         this.perishableDateInput.value = item.perishableDate ? item.perishableDate.split('T')[0] : '';
                         this.deleteItemBtn.classList.remove('hidden'); // Show delete button for existing items
+
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const minDate = new Date(Math.max(today.getTime(), this.currentItemDateAdded.getTime()));
+                        this.perishableDateInput.min = minDate.toISOString().split('T')[0];
                     } else {
                         // For new items, default to continuous input visible, discrete hidden
                         document.getElementById('itemImage').classList.add('hidden');
@@ -631,6 +643,11 @@
                         this.dateAddedInput.valueAsDate = new Date(); // Default to current date for new item
                         this.perishableDateInput.value = ''; // Clear for new item
                         this.deleteItemBtn.classList.add('hidden'); // Hide delete button for new items
+
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const minDate = new Date(Math.max(today.getTime(), this.currentItemDateAdded.getTime()));
+                        this.perishableDateInput.min = minDate.toISOString().split('T')[0];
                     }
                     this.openModal(this.itemModal);
                 },
@@ -642,13 +659,22 @@
                 },
 
                 handleQuickAdd(amount, unit) {
-                    const date = new Date(this.perishableDateInput.value || new Date());
+                    const currentDate = new Date(this.perishableDateInput.value || new Date());
+                    let newDate = new Date(currentDate);
+
                     if (unit === 'days') {
-                        date.setDate(date.getDate() + amount);
+                        newDate.setDate(newDate.getDate() + amount);
                     } else if (unit === 'months') {
-                        date.setMonth(date.getMonth() + amount);
+                        newDate.setMonth(newDate.getMonth() + amount);
+                    } else if (unit === 'years') {
+                        newDate.setFullYear(newDate.getFullYear() + amount);
                     }
-                    this.perishableDateInput.valueAsDate = date;
+
+                    this.perishableDateInput.valueAsDate = newDate;
+                },
+
+                handleResetPerishableDate() {
+                    this.perishableDateInput.valueAsDate = new Date();
                 },
 
                 handleFormSubmit(e) {
