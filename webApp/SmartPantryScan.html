@@ -179,13 +179,15 @@
                     <label for="itemName" class="block text-sm font-medium mb-1">Item Name</label>
                     <input type="text" id="itemName" required class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
                 </div>
-                <div id="continuousQuantityInput" class="mb-4">
-                    <label for="itemQuantityNumeric" class="block text-sm font-medium mb-1">Quantity</label>
-                    <input type="number" id="itemQuantityNumeric" required min="0" class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
-                </div>
-                <div id="itemUnitInput" class="mb-4">
-                    <label for="itemUnit" class="block text-sm font-medium mb-1">Unit</label>
-                    <input type="text" id="itemUnit" class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
+                <div id="continuousQuantityInput" class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="itemQuantityNumeric" class="block text-sm font-medium mb-1">Quantity</label>
+                        <input type="number" id="itemQuantityNumeric" required min="0" class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
+                    </div>
+                    <div>
+                        <label for="itemUnit" class="block text-sm font-medium mb-1">Unit</label>
+                        <input type="text" id="itemUnit" class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
+                    </div>
                 </div>
                 <div id="discreteQuantityCounter" class="mb-4 hidden">
                     <label for="discreteItemQuantity" class="block text-sm font-medium mb-1">Number of Items</label>
@@ -355,7 +357,6 @@
                     this.toggleFlashlightBtn = document.getElementById('toggleFlashlightBtn');
                     this.isDiscrete = document.getElementById('isDiscrete');
                     this.continuousQuantityInput = document.getElementById('continuousQuantityInput');
-                    this.itemUnitInput = document.getElementById('itemUnitInput');
                     this.discreteQuantityCounter = document.getElementById('discreteQuantityCounter');
                     this.discreteItemQuantity = document.getElementById('discreteItemQuantity');
                     this.decrementDiscreteQuantity = document.getElementById('decrementDiscreteQuantity');
@@ -469,12 +470,10 @@
                     this.isDiscrete.addEventListener('change', () => {
                         if (this.isDiscrete.checked) {
                             this.continuousQuantityInput.classList.add('hidden');
-                            this.itemUnitInput.classList.add('hidden');
                             this.discreteQuantityCounter.classList.remove('hidden');
                             this.remainingQuantitySliderContainer.style.display = 'none';
                         } else {
                             this.continuousQuantityInput.classList.remove('hidden');
-                            this.itemUnitInput.classList.remove('hidden');
                             this.discreteQuantityCounter.classList.add('hidden');
                             this.remainingQuantitySliderContainer.style.display = 'block';
                         }
@@ -600,13 +599,11 @@
 
                         if (item.isDiscrete) {
                             this.continuousQuantityInput.classList.add('hidden');
-                            this.itemUnitInput.classList.add('hidden');
                             this.discreteQuantityCounter.classList.remove('hidden');
                             this.discreteItemQuantity.value = item.quantity;
                             this.remainingQuantitySliderContainer.style.display = 'none';
                         } else {
                             this.continuousQuantityInput.classList.remove('hidden');
-                            this.itemUnitInput.classList.remove('hidden');
                             this.discreteQuantityCounter.classList.add('hidden');
                             document.getElementById('itemQuantityNumeric').value = item.quantity;
                             document.getElementById('itemUnit').value = item.unit || '';
@@ -628,7 +625,6 @@
                         document.getElementById('itemImage').classList.add('hidden');
                         document.getElementById('isDiscrete').checked = false;
                         this.continuousQuantityInput.classList.remove('hidden');
-                        this.itemUnitInput.classList.remove('hidden');
                         this.discreteQuantityCounter.classList.add('hidden');
                         document.getElementById('itemQuantityNumeric').value = 1; // Default quantity for new continuous item
                         document.getElementById('itemUnit').value = '';
