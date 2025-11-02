@@ -208,14 +208,10 @@
                     <input type="text" id="itemLocation" placeholder="e.g., Pantry" required class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring" list="location-list">
                     <datalist id="location-list"></datalist>
                 </div>
-                <div class="mb-4">
-                    <label for="dateAddedInput" class="block text-sm font-medium mb-1">Date Added</label>
-                    <input type="date" id="dateAddedInput" required class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
-                </div>
                 <div class="mb-6">
                     <label for="perishableDateInput" class="block text-sm font-medium mb-1">Perishable Date</label>
                     <div class="flex items-center flex-wrap gap-2">
-                        <input type="date" id="perishableDateInput" class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
+                        <input type="date" id="perishableDateInput" required class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
                         <button type="button" id="quickAdd1Day" class="p-2 bg-blue-200 dark:bg-blue-800 rounded-md text-sm custom-focus-ring whitespace-nowrap">+1 Day</button>
                         <button type="button" id="quickAdd7Days" class="p-2 bg-blue-200 dark:bg-blue-800 rounded-md text-sm custom-focus-ring whitespace-nowrap">+7 Days</button>
                         <button type="button" id="quickAdd1Month" class="p-2 bg-blue-200 dark:bg-blue-800 rounded-md text-sm custom-focus-ring whitespace-nowrap">+1 Month</button>
@@ -367,7 +363,6 @@
                     this.remainingQuantitySliderContainer = document.getElementById('remainingQuantitySliderContainer');
                     this.remainingRatio = document.getElementById('remainingRatio');
                     this.remainingRatioValue = document.getElementById('remainingRatioValue');
-                    this.dateAddedInput = document.getElementById('dateAddedInput');
                     this.perishableDateInput = document.getElementById('perishableDateInput');
                     this.quickAdd1Day = document.getElementById('quickAdd1Day');
                     this.quickAdd7Days = document.getElementById('quickAdd7Days');
@@ -620,7 +615,7 @@
                             this.remainingQuantitySliderContainer.style.display = 'block';
                         }
 
-                        this.dateAddedInput.value = item.dateAdded ? item.dateAdded.split('T')[0] : '';
+
                         this.perishableDateInput.value = item.perishableDate ? item.perishableDate.split('T')[0] : '';
                         this.deleteItemBtn.classList.remove('hidden'); // Show delete button for existing items
 
@@ -640,8 +635,9 @@
                         this.remainingRatio.value = 100;
                         this.remainingRatioValue.textContent = '100%';
                         this.remainingQuantitySliderContainer.style.display = 'block';
-                        this.dateAddedInput.valueAsDate = new Date(); // Default to current date for new item
-                        this.perishableDateInput.value = ''; // Clear for new item
+                        const oneWeekFromNow = new Date();
+                        oneWeekFromNow.setDate(oneWeekFromNow.getDate() + 7);
+                        this.perishableDateInput.valueAsDate = oneWeekFromNow;
                         this.deleteItemBtn.classList.add('hidden'); // Hide delete button for new items
 
                         const today = new Date();
@@ -704,7 +700,6 @@
                         isDiscrete: isDiscrete,
                         remainingRatio: remainingRatioValue,
                         location: document.getElementById('itemLocation').value,
-                        dateAdded: new Date(document.getElementById('dateAddedInput').value).toISOString(),
                         perishableDate: document.getElementById('perishableDateInput').value ? new Date(document.getElementById('perishableDateInput').value).toISOString() : null,
                         lastModified: new Date().toISOString(),
                         imageSmallUrl: document.getElementById('itemImage').src.endsWith('SmartPantryScan.html') ? '' : document.getElementById('itemImage').src,
@@ -712,7 +707,10 @@
                     };
                     if (id) {
                         const index = this.inventory.findIndex(item => item.id == id);
-                        if (index !== -1) this.inventory[index] = { ...this.inventory[index], ...newItem };
+                        if (index !== -1) {
+                            newItem.dateAdded = this.inventory[index].dateAdded;
+                            this.inventory[index] = { ...this.inventory[index], ...newItem };
+                        }
                     } else {
                         newItem.id = Date.now();
                         newItem.dateAdded = new Date().toISOString();
