@@ -1025,7 +1025,7 @@
                 },
 
                 renderLocationDatalist() {
-                    const locations = [...new Set(this.inventory.map(item => item.location))];
+                    const locations = [...new Set(this.inventory.map(item => item.location))].sort();
                     this.locationDatalist.innerHTML = locations.map(location => `<option value="${location}"></option>`).join('');
                 },
 
