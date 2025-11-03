@@ -14,7 +14,7 @@ The web application is currently complete and ready for testing. You can interac
     Simply open the `SmartPantryScan.html` file in your preferred web browser (e.g., Chrome, Firefox, Safari). You can do this by double-clicking the file or dragging it into an open browser window.
 3.  **Start Managing Your Pantry!**
     *   **Add Items:** Click the floating "Add Manually" button (bottom right) to open the item form. From there, you can either fill in details manually or click the embedded "Scan Barcode" button to use your device's camera to scan a product.
-    *   **View Inventory:** Your items will be displayed in a responsive table or card view.
+    *   **View Inventory:** Items will be displayed in a responsive table or card view.
     *   **Filter & Sort:** Use the "Filters & Search" section to find specific items or sort your inventory.
     *   **Select & Delete:** Select multiple items using checkboxes (or long-press on cards) and use the floating "Delete Selected" button to remove them.
 
@@ -83,7 +83,7 @@ The web application is currently complete and ready for testing. You can interac
 
 ## Data Storage:
 
-This application uses your browser's local storage to save your pantry inventory. Your data is stored locally on your device and is not sent to any server. Clearing your browser's local storage for this site will delete your inventory data.
+This application uses the browser's local storage to save pantry inventory. Data is stored locally on the device and is not sent to any server. Clearing the browser's local storage for this site will delete inventory data.
 
 ## Future Plans (Phase 1: MVP Launch)
 
@@ -95,7 +95,7 @@ The focus for Phase 1 is speed, adoption, and validating the core product's feat
     *   Configure the wrapper to build for Android.
 *   **Monetization (Donate Button):**
     *   Set up an account with a payment service (e.g., PayPal, Stripe, Buy Me a Coffee).
-    *   Add a clear, non-intrusive "Support This App / Donate" button in your HTML that links to your donation page.
+    *   Integrate a clear, non-intrusive "Support This App / Donate" button in the HTML that links to a donation page.
 *   **Polish & Release (Google Play Store):**
     *   Finalize: Polish the UI and perform final quality checks on all core features (especially saving/loading from localStorage).
     *   Build: Generate the production Android build file (.aab).
