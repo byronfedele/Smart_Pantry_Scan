@@ -66,9 +66,9 @@
 
             <!-- Filters -->
             <div class="bg-primary-light dark:bg-tertiary-dark p-4 rounded-lg shadow-md mb-6">
-                <details open>
+                <details>
                     <summary class="font-semibold text-lg cursor-pointer text-primary-dark dark:text-primary-light flex justify-between items-center">
-                        <span>Filters & Search</span>
+                        <span>Organize & Filter</span>
                         <svg class="w-6 h-6 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </summary>
                     <div id="filters" class="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -93,6 +93,19 @@
                             <label for="showExpiringSoon" class="text-sm font-medium text-neutral-dark dark:text-neutral-light">Expiring in</label>
                             <input type="number" id="expiringDays" value="3" min="1" class="ml-2 w-16 p-1 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-neutral-light custom-focus-ring text-center">
                             <span class="ml-1 text-sm font-medium text-neutral-dark dark:text-neutral-light">days</span>
+                        </div>
+                        <div class="md:hidden">
+                            <label for="mobileSort" class="block text-sm font-medium text-neutral-dark dark:text-neutral-light mb-1">Sort by</label>
+                            <select id="mobileSort" class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-neutral-light custom-focus-ring">
+                                <option value="dateAdded_desc">Date Added (Newest)</option>
+                                <option value="dateAdded_asc">Date Added (Oldest)</option>
+                                <option value="spoilage_asc" selected>Spoilage in (Soonest)</option>
+                                <option value="spoilage_desc">Spoilage in (Latest)</option>
+                                <option value="amountRemaining_asc">Amount Remaining (Least)</option>
+                                <option value="amountRemaining_desc">Amount Remaining (Most)</option>
+                                <option value="name_asc">Name (A-Z)</option>
+                                <option value="name_desc">Name (Z-A)</option>
+                            </select>
                         </div>
                     </div>
                     <div class="mt-4 flex justify-end">
@@ -140,28 +153,41 @@
 
     <!-- Add/Edit Item Modal -->
     <div id="itemModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-primary-light dark:bg-secondary-dark rounded-lg shadow-xl w-full max-w-md p-6 modal-enter">
-            <h2 id="modalTitle" class="text-2xl font-bold mb-4 text-primary-dark dark:text-primary-light">Add New Item</h2>
-            <button id="scanBarcodeInFormBtn" class="flex items-center justify-center w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-300 custom-focus-ring mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M2 6h2v12H2V6zm3 0h1v12H5V6zm2 0h2v12H7V6zm3 0h1v12h-1V6zm2 0h2v12h-2V6zm3 0h1v12h-1V6zm2 0h3v12h-3V6z"/>
-                </svg>
-                <span>Scan Barcode</span>
-            </button>
-            <form id="itemForm">
+        <div class="bg-primary-light dark:bg-secondary-dark rounded-lg shadow-xl w-full max-w-md sm:max-w-lg px-4 pb-4 sm:px-6 sm:pb-6 modal-enter flex flex-col max-h-full">
+            <div class="sticky top-0 bg-primary-light dark:bg-secondary-dark z-10 pb-4 px-4 pt-4 rounded-t-lg">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 id="modalTitle" class="text-2xl font-bold text-primary-dark dark:text-primary-light">Add New Item</h2>
+                    <button id="closeItemModalBtn" class="p-2 rounded-full bg-secondary-light dark:bg-tertiary-dark text-primary-dark dark:text-primary-light custom-focus-ring transition-colors duration-300">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <button id="scanBarcodeInFormBtn" class="flex items-center justify-center w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-300 custom-focus-ring mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M2 6h2v12H2V6zm3 0h1v12H5V6zm2 0h2v12H7V6zm3 0h1v12h-1V6zm2 0h2v12h-2V6zm3 0h1v12h-1V6zm2 0h3v12h-3V6z"/>
+                    </svg>
+                    <span>Scan Barcode</span>
+                </button>
+            </div>
+            <form id="itemForm" class="overflow-y-auto">
                 <input type="hidden" id="itemId">
                 <input type="hidden" id="itemBarcode">
+                <input type="hidden" id="itemUrl">
+                <div class="mb-4">
+                    <img id="itemImage" src="" alt="Product Image" class="w-32 h-32 object-contain mx-auto rounded-lg mb-4">
+                </div>
                 <div class="mb-4">
                     <label for="itemName" class="block text-sm font-medium mb-1">Item Name</label>
                     <input type="text" id="itemName" required class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
                 </div>
-                <div id="continuousQuantityInput" class="mb-4">
-                    <label for="itemQuantityNumeric" class="block text-sm font-medium mb-1">Quantity</label>
-                    <input type="number" id="itemQuantityNumeric" required min="0" class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
-                </div>
-                <div id="itemUnitInput" class="mb-4">
-                    <label for="itemUnit" class="block text-sm font-medium mb-1">Unit</label>
-                    <input type="text" id="itemUnit" class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
+                <div id="continuousQuantityInput" class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="itemQuantityNumeric" class="block text-sm font-medium mb-1">Quantity</label>
+                        <input type="number" id="itemQuantityNumeric" required min="0" class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
+                    </div>
+                    <div>
+                        <label for="itemUnit" class="block text-sm font-medium mb-1">Unit</label>
+                        <input type="text" id="itemUnit" class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
+                    </div>
                 </div>
                 <div id="discreteQuantityCounter" class="mb-4 hidden">
                     <label for="discreteItemQuantity" class="block text-sm font-medium mb-1">Number of Items</label>
@@ -184,17 +210,15 @@
                     <input type="text" id="itemLocation" placeholder="e.g., Pantry" required class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring" list="location-list">
                     <datalist id="location-list"></datalist>
                 </div>
-                <div class="mb-4">
-                    <label for="dateAddedInput" class="block text-sm font-medium mb-1">Date Added</label>
-                    <input type="date" id="dateAddedInput" required class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
-                </div>
                 <div class="mb-6">
                     <label for="perishableDateInput" class="block text-sm font-medium mb-1">Perishable Date</label>
-                    <div class="flex items-center space-x-2">
-                        <input type="date" id="perishableDateInput" class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
-                        <button type="button" id="quickAdd3Days" class="p-2 bg-gray-200 dark:bg-gray-700 rounded-md text-sm custom-focus-ring whitespace-nowrap">+3 Days</button>
-                        <button type="button" id="quickAdd7Days" class="p-2 bg-gray-200 dark:bg-gray-700 rounded-md text-sm custom-focus-ring whitespace-nowrap">+7 Days</button>
-                        <button type="button" id="quickAdd1Month" class="p-2 bg-gray-200 dark:bg-gray-700 rounded-md text-sm custom-focus-ring whitespace-nowrap">+1 Month</button>
+                    <div class="flex items-center flex-wrap gap-2">
+                        <input type="date" id="perishableDateInput" required class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
+                        <button type="button" id="quickAdd1Day" class="p-2 bg-blue-200 dark:bg-blue-800 rounded-md text-sm custom-focus-ring whitespace-nowrap">+1 Day</button>
+                        <button type="button" id="quickAdd7Days" class="p-2 bg-blue-200 dark:bg-blue-800 rounded-md text-sm custom-focus-ring whitespace-nowrap">+7 Days</button>
+                        <button type="button" id="quickAdd1Month" class="p-2 bg-blue-200 dark:bg-blue-800 rounded-md text-sm custom-focus-ring whitespace-nowrap">+1 Month</button>
+                        <button type="button" id="quickAdd1Year" class="p-2 bg-blue-200 dark:bg-blue-800 rounded-md text-sm custom-focus-ring whitespace-nowrap">+1 Year</button>
+                        <button type="button" id="resetPerishableDate" class="p-2 bg-gray-300 dark:bg-gray-600 rounded-md text-sm custom-focus-ring whitespace-nowrap">Reset</button>
                     </div>
                 </div>
                 <div class="flex justify-between space-x-4">
@@ -202,7 +226,6 @@
                         <button type="button" id="deleteItemBtn" class="py-2 px-4 rounded-lg bg-error text-white font-bold hidden">Delete</button>
                     </div>
                     <div class="flex space-x-4">
-                        <button type="button" id="cancelBtn" class="py-2 px-4 rounded-lg bg-neutral-light dark:bg-neutral-dark">Cancel</button>
                         <button type="submit" id="saveBtn" class="py-2 px-6 rounded-lg bg-primary-dark text-white font-bold">Save</button>
                     </div>
                 </div>
@@ -237,6 +260,8 @@
             </div>
         </div>
     </div>
+
+
 
     <!-- Barcode Scan Modal -->
     <div id="barcodeScanModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
@@ -280,7 +305,7 @@
                 filteredInventory: [],
                 currentPage: 1,
                 itemsPerPage: 10,
-                sortConfig: { key: 'dateAdded', direction: 'desc' },
+                sortConfig: { key: 'spoilage', direction: 'asc' },
                 itemToDeleteId: null,
                 selectedItems: [],
                 selectedLocationFilters: [], // New array to store selected locations
@@ -302,10 +327,7 @@
                     this.addItemBtn = document.getElementById('addItemBtn');
                     this.scanBarcodeInFormBtn = document.getElementById('scanBarcodeInFormBtn'); // New
                     this.itemModal = document.getElementById('itemModal');
-                    this.scanModal = document.getElementById('scanModal');
-                    this.barcodeScanModal = document.getElementById('barcodeScanModal');
-                    this.confirmModal = document.getElementById('confirmModal');
-                    this.cancelBtn = document.getElementById('cancelBtn');
+                    this.closeItemModalBtn = document.getElementById('closeItemModalBtn');
                     this.cancelScanBtn = document.getElementById('cancelScanBtn');
                     this.cancelBarcodeScanBtn = document.getElementById('cancelBarcodeScanBtn');
                     this.interactionModal = document.getElementById('interactionModal');
@@ -317,6 +339,8 @@
                     this.selectAllCheckbox = document.getElementById('selectAllCheckbox');
                     this.deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
                     this.itemForm = document.getElementById('itemForm');
+                    this.itemImage = document.getElementById('itemImage');
+                    this.itemUrl = document.getElementById('itemUrl');
                     this.itemQuantityNumeric = document.getElementById('itemQuantityNumeric');
                     this.itemUnit = document.getElementById('itemUnit');
                     this.tableBody = document.getElementById('inventory-table-body');
@@ -333,7 +357,6 @@
                     this.toggleFlashlightBtn = document.getElementById('toggleFlashlightBtn');
                     this.isDiscrete = document.getElementById('isDiscrete');
                     this.continuousQuantityInput = document.getElementById('continuousQuantityInput');
-                    this.itemUnitInput = document.getElementById('itemUnitInput');
                     this.discreteQuantityCounter = document.getElementById('discreteQuantityCounter');
                     this.discreteItemQuantity = document.getElementById('discreteItemQuantity');
                     this.decrementDiscreteQuantity = document.getElementById('decrementDiscreteQuantity');
@@ -341,23 +364,25 @@
                     this.remainingQuantitySliderContainer = document.getElementById('remainingQuantitySliderContainer');
                     this.remainingRatio = document.getElementById('remainingRatio');
                     this.remainingRatioValue = document.getElementById('remainingRatioValue');
-                    this.dateAddedInput = document.getElementById('dateAddedInput');
                     this.perishableDateInput = document.getElementById('perishableDateInput');
-                    this.quickAdd3Days = document.getElementById('quickAdd3Days');
+                    this.quickAdd1Day = document.getElementById('quickAdd1Day');
                     this.quickAdd7Days = document.getElementById('quickAdd7Days');
                     this.quickAdd1Month = document.getElementById('quickAdd1Month');
+                    this.quickAdd1Year = document.getElementById('quickAdd1Year');
+                    this.resetPerishableDate = document.getElementById('resetPerishableDate');
                     this.clearAllFiltersBtn = document.getElementById('clearAllFiltersBtn');
                     this.deleteItemBtn = document.getElementById('deleteItemBtn');
                     this.showSpoiledCheckbox = document.getElementById('showSpoiled');
                     this.showExpiringSoonCheckbox = document.getElementById('showExpiringSoon');
                     this.expiringDaysInput = document.getElementById('expiringDays');
+                    this.mobileSort = document.getElementById('mobileSort');
                 },
 
                 addEventListeners() {
                     this.themeToggle.addEventListener('click', () => this.toggleTheme());
                     this.addItemBtn.addEventListener('click', () => this.openItemForm());
                     this.scanBarcodeInFormBtn.addEventListener('click', () => window.barcodeScannerApp.startScan()); // New
-                    this.cancelBtn.addEventListener('click', () => this.closeModal(this.itemModal));
+                    this.closeItemModalBtn.addEventListener('click', () => this.closeModal(this.itemModal));
                     this.cancelBarcodeScanBtn.addEventListener('click', () => window.barcodeScannerApp.stopScan());
                     this.toggleFlashlightBtn.addEventListener('click', () => window.barcodeScannerApp.toggleFlashlight());
                     this.itemForm.addEventListener('submit', (e) => this.handleFormSubmit(e));
@@ -438,17 +463,17 @@
                     this.showSpoiledCheckbox.addEventListener('change', (e) => this.handleFilterChange(e));
                     this.showExpiringSoonCheckbox.addEventListener('change', (e) => this.handleFilterChange(e));
                     this.expiringDaysInput.addEventListener('input', (e) => this.handleFilterChange(e));
+                    this.mobileSort.addEventListener('change', (e) => this.handleMobileSort(e));
+                    window.addEventListener('resize', () => this.render());
 
                     // New event listeners for remaining quantity slider and discrete item quantity
                     this.isDiscrete.addEventListener('change', () => {
                         if (this.isDiscrete.checked) {
                             this.continuousQuantityInput.classList.add('hidden');
-                            this.itemUnitInput.classList.add('hidden');
                             this.discreteQuantityCounter.classList.remove('hidden');
                             this.remainingQuantitySliderContainer.style.display = 'none';
                         } else {
                             this.continuousQuantityInput.classList.remove('hidden');
-                            this.itemUnitInput.classList.remove('hidden');
                             this.discreteQuantityCounter.classList.add('hidden');
                             this.remainingQuantitySliderContainer.style.display = 'block';
                         }
@@ -467,9 +492,12 @@
                         this.discreteItemQuantity.value = currentValue + 1;
                     });
 
-                    this.quickAdd3Days.addEventListener('click', () => this.handleQuickAdd(3, 'days'));
+                    this.quickAdd1Day.addEventListener('click', () => this.handleQuickAdd(1, 'days'));
                     this.quickAdd7Days.addEventListener('click', () => this.handleQuickAdd(7, 'days'));
                     this.quickAdd1Month.addEventListener('click', () => this.handleQuickAdd(1, 'months'));
+                    this.quickAdd1Year.addEventListener('click', () => this.handleQuickAdd(1, 'years'));
+                    this.resetPerishableDate.addEventListener('click', () => this.handleResetPerishableDate());
+
                 },
 
                 clearAllFilters() {
@@ -505,16 +533,16 @@
                     } else {
                         // Default food-related inventory items
                         this.inventory = [
-                            { id: 1, name: 'Milk', quantity: 1, unit: 'Liter', isDiscrete: false, remainingRatio: 0.75, location: 'Refrigerator', dateAdded: '2025-09-28T10:00:00Z', perishableDate: '2025-10-26T10:00:00Z' },
-                            { id: 2, name: 'Bananas', quantity: 6, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Counter', dateAdded: '2025-09-29T11:30:00Z', perishableDate: '2025-10-24T11:30:00Z' },
-                            { id: 3, name: 'Canned Tomatoes', quantity: 2, unit: 'cans', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-09-25T14:00:00Z', perishableDate: '2026-09-25T14:00:00Z' },
-                            { id: 4, name: 'Eggs', quantity: 12, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Refrigerator', dateAdded: '2025-09-20T09:00:00Z', perishableDate: '2025-10-11T09:00:00Z' },
-                            { id: 5, name: 'Bread', quantity: 1, unit: 'loaf', isDiscrete: false, remainingRatio: 0.5, location: 'Pantry', dateAdded: '2025-09-30T16:00:00Z', perishableDate: '2025-10-07T16:00:00Z' },
-                            { id: 6, name: 'Yogurt', quantity: 4, unit: 'cups', isDiscrete: true, remainingRatio: 1, location: 'Refrigerator', dateAdded: '2025-09-27T08:00:00Z', perishableDate: '2025-10-11T08:00:00Z' },
-                            { id: 7, name: 'Coffee Beans', quantity: 500, unit: 'grams', isDiscrete: false, remainingRatio: 0.8, location: 'Pantry', dateAdded: '2025-09-26T13:00:00Z', perishableDate: '2025-12-25T13:00:00Z' },
-                            { id: 8, name: 'Apples', quantity: 5, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Counter', dateAdded: '2025-09-24T10:00:00Z', perishableDate: '2025-10-08T10:00:00Z' },
-                            { id: 9, name: 'Cheese', quantity: 200, unit: 'grams', isDiscrete: false, remainingRatio: 0.6, location: 'Refrigerator', dateAdded: '2025-09-23T15:00:00Z', perishableDate: '2025-10-23T15:00:00Z' },
-                            { id: 10, name: 'Pasta', quantity: 1, unit: 'box', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-09-22T12:00:00Z', perishableDate: '2027-09-22T12:00:00Z' },
+                            { id: 1, name: 'Milk', quantity: 1, unit: 'Liter', isDiscrete: false, remainingRatio: 0.75, location: 'Refrigerator', dateAdded: '2025-09-28T10:00:00Z', perishableDate: '2025-10-26T10:00:00Z', imageSmallUrl: '', url: '' },
+                            { id: 2, name: 'Bananas', quantity: 6, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Counter', dateAdded: '2025-09-29T11:30:00Z', perishableDate: '2025-10-24T11:30:00Z', imageSmallUrl: '', url: '' },
+                            { id: 3, name: 'Canned Tomatoes', quantity: 2, unit: 'cans', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-09-25T14:00:00Z', perishableDate: '2026-09-25T14:00:00Z', imageSmallUrl: '', url: '' },
+                            { id: 4, name: 'Eggs', quantity: 12, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Refrigerator', dateAdded: '2025-09-20T09:00:00Z', perishableDate: '2025-10-11T09:00:00Z', imageSmallUrl: '', url: '' },
+                            { id: 5, name: 'Bread', quantity: 1, unit: 'loaf', isDiscrete: false, remainingRatio: 0.5, location: 'Pantry', dateAdded: '2025-09-30T16:00:00Z', perishableDate: '2025-10-07T16:00:00Z', imageSmallUrl: '', url: '' },
+                            { id: 6, name: 'Yogurt', quantity: 4, unit: 'cups', isDiscrete: true, remainingRatio: 1, location: 'Refrigerator', dateAdded: '2025-09-27T08:00:00Z', perishableDate: '2025-10-11T08:00:00Z', imageSmallUrl: '', url: '' },
+                            { id: 7, name: 'Coffee Beans', quantity: 500, unit: 'grams', isDiscrete: false, remainingRatio: 0.8, location: 'Pantry', dateAdded: '2025-09-26T13:00:00Z', perishableDate: '2025-12-25T13:00:00Z', imageSmallUrl: '', url: '' },
+                            { id: 8, name: 'Apples', quantity: 5, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Counter', dateAdded: '2025-09-24T10:00:00Z', perishableDate: '2025-10-08T10:00:00Z', imageSmallUrl: '', url: '' },
+                            { id: 9, name: 'Cheese', quantity: 200, unit: 'grams', isDiscrete: false, remainingRatio: 0.6, location: 'Refrigerator', dateAdded: '2025-09-23T15:00:00Z', perishableDate: '2025-10-23T15:00:00Z', imageSmallUrl: '', url: '' },
+                            { id: 10, name: 'Pasta', quantity: 1, unit: 'box', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-09-22T12:00:00Z', perishableDate: '2027-09-22T12:00:00Z', imageSmallUrl: '', url: '' },
                         ];
                     }
                 },
@@ -546,25 +574,36 @@
                 openItemForm(item = null) {
                     this.itemForm.reset();
                     document.getElementById('modalTitle').textContent = item ? 'Edit Item' : 'Add New Item';
-                    this.scanBarcodeInFormBtn.classList.remove('hidden'); // Ensure button is visible when form opens
+                    if (item) {
+                        this.scanBarcodeInFormBtn.classList.add('hidden'); // Hide button when editing existing item
+                    } else {
+                        this.scanBarcodeInFormBtn.classList.remove('hidden'); // Show button when adding new item
+                    }
                     const itemIdInput = document.getElementById('itemId');
                     const itemBarcodeInput = document.getElementById('itemBarcode');
                     itemIdInput.value = item ? item.id : '';
                     itemBarcodeInput.value = item ? item.barcode : '';
+                    this.currentItemDateAdded = item ? new Date(item.dateAdded) : new Date();
                     if (item) {
                         document.getElementById('itemName').value = item.name;
                         document.getElementById('itemLocation').value = item.location;
+                        document.getElementById('itemImage').src = item.imageSmallUrl || '';
+
+                        if (item.imageSmallUrl) {
+                            document.getElementById('itemImage').classList.remove('hidden');
+                        } else {
+                            document.getElementById('itemImage').classList.add('hidden');
+                        }
+                        document.getElementById('itemUrl').value = item.url || '';
                         document.getElementById('isDiscrete').checked = item.isDiscrete || false;
 
                         if (item.isDiscrete) {
                             this.continuousQuantityInput.classList.add('hidden');
-                            this.itemUnitInput.classList.add('hidden');
                             this.discreteQuantityCounter.classList.remove('hidden');
                             this.discreteItemQuantity.value = item.quantity;
                             this.remainingQuantitySliderContainer.style.display = 'none';
                         } else {
                             this.continuousQuantityInput.classList.remove('hidden');
-                            this.itemUnitInput.classList.remove('hidden');
                             this.discreteQuantityCounter.classList.add('hidden');
                             document.getElementById('itemQuantityNumeric').value = item.quantity;
                             document.getElementById('itemUnit').value = item.unit || '';
@@ -573,23 +612,34 @@
                             this.remainingQuantitySliderContainer.style.display = 'block';
                         }
 
-                        this.dateAddedInput.value = item.dateAdded ? item.dateAdded.split('T')[0] : '';
+
                         this.perishableDateInput.value = item.perishableDate ? item.perishableDate.split('T')[0] : '';
                         this.deleteItemBtn.classList.remove('hidden'); // Show delete button for existing items
+
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const minDate = new Date(Math.max(today.getTime(), this.currentItemDateAdded.getTime()));
+                        this.perishableDateInput.min = minDate.toISOString().split('T')[0];
                     } else {
                         // For new items, default to continuous input visible, discrete hidden
+                        document.getElementById('itemImage').classList.add('hidden');
                         document.getElementById('isDiscrete').checked = false;
                         this.continuousQuantityInput.classList.remove('hidden');
-                        this.itemUnitInput.classList.remove('hidden');
                         this.discreteQuantityCounter.classList.add('hidden');
                         document.getElementById('itemQuantityNumeric').value = 1; // Default quantity for new continuous item
                         document.getElementById('itemUnit').value = '';
                         this.remainingRatio.value = 100;
                         this.remainingRatioValue.textContent = '100%';
                         this.remainingQuantitySliderContainer.style.display = 'block';
-                        this.dateAddedInput.valueAsDate = new Date(); // Default to current date for new item
-                        this.perishableDateInput.value = ''; // Clear for new item
+                        const oneWeekFromNow = new Date();
+                        oneWeekFromNow.setDate(oneWeekFromNow.getDate() + 7);
+                        this.perishableDateInput.valueAsDate = oneWeekFromNow;
                         this.deleteItemBtn.classList.add('hidden'); // Hide delete button for new items
+
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const minDate = new Date(Math.max(today.getTime(), this.currentItemDateAdded.getTime()));
+                        this.perishableDateInput.min = minDate.toISOString().split('T')[0];
                     }
                     this.openModal(this.itemModal);
                 },
@@ -601,13 +651,22 @@
                 },
 
                 handleQuickAdd(amount, unit) {
-                    const date = new Date(this.perishableDateInput.value || new Date());
+                    const currentDate = new Date(this.perishableDateInput.value || new Date());
+                    let newDate = new Date(currentDate);
+
                     if (unit === 'days') {
-                        date.setDate(date.getDate() + amount);
+                        newDate.setDate(newDate.getDate() + amount);
                     } else if (unit === 'months') {
-                        date.setMonth(date.getMonth() + amount);
+                        newDate.setMonth(newDate.getMonth() + amount);
+                    } else if (unit === 'years') {
+                        newDate.setFullYear(newDate.getFullYear() + amount);
                     }
-                    this.perishableDateInput.valueAsDate = date;
+
+                    this.perishableDateInput.valueAsDate = newDate;
+                },
+
+                handleResetPerishableDate() {
+                    this.perishableDateInput.valueAsDate = new Date();
                 },
 
                 handleFormSubmit(e) {
@@ -637,13 +696,17 @@
                         isDiscrete: isDiscrete,
                         remainingRatio: remainingRatioValue,
                         location: document.getElementById('itemLocation').value,
-                        dateAdded: new Date(document.getElementById('dateAddedInput').value).toISOString(),
                         perishableDate: document.getElementById('perishableDateInput').value ? new Date(document.getElementById('perishableDateInput').value).toISOString() : null,
                         lastModified: new Date().toISOString(),
+                        imageSmallUrl: document.getElementById('itemImage').src.endsWith('SmartPantryScan.html') ? '' : document.getElementById('itemImage').src,
+                        url: document.getElementById('itemUrl').value,
                     };
                     if (id) {
                         const index = this.inventory.findIndex(item => item.id == id);
-                        if (index !== -1) this.inventory[index] = { ...this.inventory[index], ...newItem };
+                        if (index !== -1) {
+                            newItem.dateAdded = this.inventory[index].dateAdded;
+                            this.inventory[index] = { ...this.inventory[index], ...newItem };
+                        }
                     } else {
                         newItem.id = Date.now();
                         newItem.dateAdded = new Date().toISOString();
@@ -732,6 +795,13 @@
                     } else if (target.matches('#expiringDays')) {
                         this.expiringDays = parseInt(target.value, 10);
                     }
+                    this.currentPage = 1;
+                    this.render();
+                },
+
+                handleMobileSort(e) {
+                    const [key, direction] = e.target.value.split('_');
+                    this.sortConfig = { key, direction };
                     this.currentPage = 1;
                     this.render();
                 },
@@ -979,7 +1049,7 @@
                 },
 
                 renderLocationDatalist() {
-                    const locations = [...new Set(this.inventory.map(item => item.location))];
+                    const locations = [...new Set(this.inventory.map(item => item.location))].sort();
                     this.locationDatalist.innerHTML = locations.map(location => `<option value="${location}"></option>`).join('');
                 },
 
@@ -1348,7 +1418,7 @@
                 async fetchAndOpenForm(barcode) {
                     const statusEl = document.getElementById('barcodeStatus');
                     statusEl.textContent = `Fetching data for ${barcode}...`;
-                    const apiUrl = `https://world.openfoodfacts.net/api/v2/product/${barcode}?fields=product_name,quantity,image_front_url`;
+                    const apiUrl = `https://world.openfoodfacts.net/api/v2/product/${barcode}?fields=product_name,quantity,image_front_url,image_small_url,url`;
 
                     try {
                         const response = await fetch(apiUrl);
@@ -1380,7 +1450,12 @@
                             document.getElementById('itemName').value = data.product.product_name || '';
                             document.getElementById('itemQuantityNumeric').value = parsedQuantity.quantity;
                             document.getElementById('itemUnit').value = parsedQuantity.unit;
-                            console.log('Product Image URL:', data.product.image_front_url);
+                            document.getElementById('itemImage').src = data.product.image_small_url || '';
+
+                            if (data.product.image_small_url) {
+                                document.getElementById('itemImage').classList.remove('hidden');
+                            }
+                            document.getElementById('itemUrl').value = data.product.url || '';
 
                             // Default perishable date to 7 days from now
                             const date = new Date();
