@@ -1,6 +1,6 @@
 # Smart Pantry Scan Web App
 
-This is the web application component of the Smart Pantry Scan project, an inventory manager designed to help reduce food waste and provide recipe suggestions.
+This is the web application component of the Smart Pantry Scan project, an inventory manager designed to help reduce food waste.
 
 ## Project Status
 
