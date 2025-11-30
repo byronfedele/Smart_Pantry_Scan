@@ -16,6 +16,33 @@ The web application is currently complete and ready for testing. You can interac
     *   **Filter & Sort:** Use the "Filters & Search" section to find specific items or sort your inventory.
     *   **Select & Delete:** Select multiple items using checkboxes (or long-press on cards) and use the floating "Delete Selected" button to remove them.
 
+## Testing
+
+This project uses [Vitest](https://vitest.dev/) for unit and integration testing.
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) (which includes npm) must be installed.
+
+### Running the Tests
+
+1.  **Navigate to the `webApp` directory:**
+    ```bash
+    cd webApp
+    ```
+
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
+
+3.  **Run the test suite:**
+    ```bash
+    npm test
+    ```
+
+This will run all the tests in the `webApp/tests` directory and display the results in your terminal.
+
 ## Implemented Features (Test Cases)
 
 ### 1. Inventory Management (CRUD Operations)

@@ -1,0 +1,16 @@
+{
+  "name": "webapp",
+  "version": "1.0.0",
+  "description": "This is the web application component of the Smart Pantry Scan project, an inventory manager designed to help reduce food waste.",
+  "main": "app.js",
+  "scripts": {
+    "test": "vitest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "jsdom": "^27.2.0",
+    "vitest": "^4.0.14"
+  }
+}
