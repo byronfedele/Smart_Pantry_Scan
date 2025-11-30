@@ -50,18 +50,15 @@ describe('Smart Pantry Scan', () => {
                 reset() {}
             },
             BarcodeFormat: { EAN_13: 'EAN_13', UPC_A: 'UPC_A' },
-            DecodeHintType: { POSSIBLE_FORMATS: 'POSSIBLE_FORMATS' }
+            DecodeHintType: { POSSIBLE_FORMAST: 'POSSIBLE_FORMAST' }
         };
 
         window.barcodeScannerApp = barcodeScannerApp;
+    });
 
-        inventoryApp.init();
-
-        inventoryApp.inventory = [
-            { id: 1, name: 'Milk', location: 'Fridge', perishableDate: '2025-10-26T10:00:00Z', dateAdded: '2025-09-28T10:00:00Z', remainingRatio: 0.5, isDiscrete: false },
-            { id: 2, name: 'Bread', location: 'Pantry', perishableDate: '2025-10-07T16:00:00Z', dateAdded: '2025-09-30T16:00:00Z', remainingRatio: 0.8, isDiscrete: false }
-        ];
-        inventoryApp.renderLocationFilters();
+    afterEach(() => {
+        vi.restoreAllMocks();
+        vi.useRealTimers();
     });
 
     afterEach(() => {
@@ -70,11 +67,28 @@ describe('Smart Pantry Scan', () => {
     });
 
     it('should have a title', () => {
+        inventoryApp.init(); // Initialize inventoryApp for this test
         const title = document.querySelector('h1');
         expect(title.textContent).toBe('Smart Pantry Scan');
     });
 
     describe('Inventory Management (CRUD)', () => {
+        beforeEach(() => {
+            inventoryApp.init();
+            inventoryApp.inventory = [
+                { id: 1, name: 'Milk', quantity: 1, unit: 'Liter', isDiscrete: false, remainingRatio: 0.75, location: 'Refrigerator', dateAdded: '2025-11-20T10:00:00Z', perishableDate: '2026-02-26T10:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 2, name: 'Bananas', quantity: 6, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Counter', dateAdded: '2025-11-25T11:30:00Z', perishableDate: '2026-02-24T11:30:00Z', imageSmallUrl: '', url: '' },
+                { id: 3, name: 'Canned Tomatoes', quantity: 2, unit: 'cans', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-11-15T14:00:00Z', perishableDate: '2026-03-25T14:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 4, name: 'Eggs', quantity: 12, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Refrigerator', dateAdded: '2025-11-10T09:00:00Z', perishableDate: '2026-02-11T09:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 5, name: 'Bread', quantity: 1, unit: 'loaf', isDiscrete: false, remainingRatio: 0.5, location: 'Pantry', dateAdded: '2025-11-28T16:00:00Z', perishableDate: '2026-02-07T16:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 6, name: 'Yogurt', quantity: 4, unit: 'cups', isDiscrete: true, remainingRatio: 1, location: 'Refrigerator', dateAdded: '2025-11-18T08:00:00Z', perishableDate: '2026-02-11T08:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 7, name: 'Coffee Beans', quantity: 500, unit: 'grams', isDiscrete: false, remainingRatio: 0.8, location: 'Pantry', dateAdded: '2025-11-17T13:00:00Z', perishableDate: '2026-03-25T13:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 8, name: 'Apples', quantity: 5, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Counter', dateAdded: '2025-11-14T10:00:00Z', perishableDate: '2026-02-08T10:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 9, name: 'Cheese', quantity: 200, unit: 'grams', isDiscrete: false, remainingRatio: 0.6, location: 'Refrigerator', dateAdded: '2025-11-13T15:00:00Z', perishableDate: '2026-02-23T15:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 10, name: 'Pasta', quantity: 1, unit: 'box', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-11-12T12:00:00Z', perishableDate: '2027-03-22T12:00:00Z', imageSmallUrl: '', url: '' },
+            ];
+            inventoryApp.renderLocationFilters(); // To ensure location filters are rendered
+        });
         it('adds a new continuous item', () => {
             const initialCount = inventoryApp.inventory.length;
             document.getElementById('itemName').value = 'Almond Milk';
@@ -141,6 +155,23 @@ describe('Smart Pantry Scan', () => {
     });
 
     describe('Filtering and Sorting', () => {
+        beforeEach(() => {
+            inventoryApp.init();
+            inventoryApp.inventory = [
+                { id: 1, name: 'Milk', quantity: 1, unit: 'Liter', isDiscrete: false, remainingRatio: 0.75, location: 'Refrigerator', dateAdded: '2025-11-20T10:00:00Z', perishableDate: '2026-02-26T10:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 2, name: 'Bananas', quantity: 6, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Counter', dateAdded: '2025-11-25T11:30:00Z', perishableDate: '2026-02-24T11:30:00Z', imageSmallUrl: '', url: '' },
+                { id: 3, name: 'Canned Tomatoes', quantity: 2, unit: 'cans', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-11-15T14:00:00Z', perishableDate: '2026-03-25T14:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 4, name: 'Eggs', quantity: 12, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Refrigerator', dateAdded: '2025-11-10T09:00:00Z', perishableDate: '2026-02-11T09:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 5, name: 'Bread', quantity: 1, unit: 'loaf', isDiscrete: false, remainingRatio: 0.5, location: 'Pantry', dateAdded: '2025-11-28T16:00:00Z', perishableDate: '2026-02-07T16:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 6, name: 'Yogurt', quantity: 4, unit: 'cups', isDiscrete: true, remainingRatio: 1, location: 'Refrigerator', dateAdded: '2025-11-18T08:00:00Z', perishableDate: '2026-02-11T08:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 7, name: 'Coffee Beans', quantity: 500, unit: 'grams', isDiscrete: false, remainingRatio: 0.8, location: 'Pantry', dateAdded: '2025-11-17T13:00:00Z', perishableDate: '2026-03-25T13:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 8, name: 'Apples', quantity: 5, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Counter', dateAdded: '2025-11-14T10:00:00Z', perishableDate: '2026-02-08T10:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 9, name: 'Cheese', quantity: 200, unit: 'grams', isDiscrete: false, remainingRatio: 0.6, location: 'Refrigerator', dateAdded: '2025-11-13T15:00:00Z', perishableDate: '2026-02-23T15:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 10, name: 'Pasta', quantity: 1, unit: 'box', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-11-12T12:00:00Z', perishableDate: '2027-03-22T12:00:00Z', imageSmallUrl: '', url: '' },
+            ];
+            inventoryApp.renderLocationFilters(); // To ensure location filters are rendered
+            inventoryApp.render(); // Render to populate the table/cards for filtering/sorting
+        });
         it('filters by item name', () => {
             document.getElementById('search').value = 'Milk';
             inventoryApp.handleFilterChange({ target: document.getElementById('search') });
@@ -164,6 +195,23 @@ describe('Smart Pantry Scan', () => {
     });
 
     describe('Barcode Scanning', () => {
+        beforeEach(() => {
+            inventoryApp.init();
+            inventoryApp.inventory = [
+                { id: 1, name: 'Milk', quantity: 1, unit: 'Liter', isDiscrete: false, remainingRatio: 0.75, location: 'Refrigerator', dateAdded: '2025-11-20T10:00:00Z', perishableDate: '2026-02-26T10:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 2, name: 'Bananas', quantity: 6, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Counter', dateAdded: '2025-11-25T11:30:00Z', perishableDate: '2026-02-24T11:30:00Z', imageSmallUrl: '', url: '' },
+                { id: 3, name: 'Canned Tomatoes', quantity: 2, unit: 'cans', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-11-15T14:00:00Z', perishableDate: '2026-03-25T14:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 4, name: 'Eggs', quantity: 12, unit: 'units', isDiscrete: true, r1emainingRatio: 1, location: 'Refrigerator', dateAdded: '2025-11-10T09:00:00Z', perishableDate: '2026-02-11T09:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 5, name: 'Bread', quantity: 1, unit: 'loaf', isDiscrete: false, remainingRatio: 0.5, location: 'Pantry', dateAdded: '2025-11-28T16:00:00Z', perishableDate: '2026-02-07T16:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 6, name: 'Yogurt', quantity: 4, unit: 'cups', isDiscrete: true, remainingRatio: 1, location: 'Refrigerator', dateAdded: '2025-11-18T08:00:00Z', perishableDate: '2026-02-11T08:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 7, name: 'Coffee Beans', quantity: 500, unit: 'grams', isDiscrete: false, remainingRatio: 0.8, location: 'Pantry', dateAdded: '2025-11-17T13:00:00Z', perishableDate: '2026-03-25T13:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 8, name: 'Apples', quantity: 5, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Counter', dateAdded: '2025-11-14T10:00:00Z', perishableDate: '2026-02-08T10:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 9, name: 'Cheese', quantity: 200, unit: 'grams', isDiscrete: false, remainingRatio: 0.6, location: 'Refrigerator', dateAdded: '2025-11-13T15:00:00Z', perishableDate: '2026-02-23T15:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 10, name: 'Pasta', quantity: 1, unit: 'box', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-11-12T12:00:00Z', perishableDate: '2027-03-22T12:00:00Z', imageSmallUrl: '', url: '' },
+            ];
+            inventoryApp.renderLocationFilters(); // To ensure location filters are rendered
+            inventoryApp.render(); // Render to populate the table/cards for filtering/sorting
+        });
         it('pre-fills the form when a new barcode is scanned', async () => {
             const mockResponse = { status: 1, product: { product_name: 'Organic Milk' } };
             fetch.mockResolvedValue({ json: () => Promise.resolve(mockResponse) });
@@ -187,6 +235,23 @@ describe('Smart Pantry Scan', () => {
     });
 
     describe('Form Logic and Validation', () => {
+        beforeEach(() => {
+            inventoryApp.init();
+            inventoryApp.inventory = [
+                { id: 1, name: 'Milk', quantity: 1, unit: 'Liter', isDiscrete: false, remainingRatio: 0.75, location: 'Refrigerator', dateAdded: '2025-11-20T10:00:00Z', perishableDate: '2026-02-26T10:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 2, name: 'Bananas', quantity: 6, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Counter', dateAdded: '2025-11-25T11:30:00Z', perishableDate: '2026-02-24T11:30:00Z', imageSmallUrl: '', url: '' },
+                { id: 3, name: 'Canned Tomatoes', quantity: 2, unit: 'cans', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-11-15T14:00:00Z', perishableDate: '2026-03-25T14:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 4, name: 'Eggs', quantity: 12, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Refrigerator', dateAdded: '2025-11-10T09:00:00Z', perishableDate: '2026-02-11T09:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 5, name: 'Bread', quantity: 1, unit: 'loaf', isDiscrete: false, remainingRatio: 0.5, location: 'Pantry', dateAdded: '2025-11-28T16:00:00Z', perishableDate: '2026-02-07T16:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 6, name: 'Yogurt', quantity: 4, unit: 'cups', isDiscrete: true, remainingRatio: 1, location: 'Refrigerator', dateAdded: '2025-11-18T08:00:00Z', perishableDate: '2026-02-11T08:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 7, name: 'Coffee Beans', quantity: 500, unit: 'grams', isDiscrete: false, remainingRatio: 0.8, location: 'Pantry', dateAdded: '2025-11-17T13:00:00Z', perishableDate: '2026-03-25T13:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 8, name: 'Apples', quantity: 5, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Counter', dateAdded: '2025-11-14T10:00:00Z', perishableDate: '2026-02-08T10:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 9, name: 'Cheese', quantity: 200, unit: 'grams', isDiscrete: false, remainingRatio: 0.6, location: 'Refrigerator', dateAdded: '2025-11-13T15:00:00Z', perishableDate: '2026-02-23T15:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 10, name: 'Pasta', quantity: 1, unit: 'box', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-11-12T12:00:00Z', perishableDate: '2027-03-22T12:00:00Z', imageSmallUrl: '', url: '' },
+            ];
+            inventoryApp.renderLocationFilters(); // To ensure location filters are rendered
+            inventoryApp.render(); // Render to populate the table/cards for filtering/sorting
+        });
         it('toggles input fields when "Is Discrete" is checked', () => {
             const continuousInput = document.getElementById('continuousQuantityInput');
             const discreteInput = document.getElementById('discreteQuantityCounter');
@@ -219,6 +284,23 @@ describe('Smart Pantry Scan', () => {
     });
 
     describe('UI and Responsiveness', () => {
+        beforeEach(() => {
+            inventoryApp.init();
+            inventoryApp.inventory = [
+                { id: 1, name: 'Milk', quantity: 1, unit: 'Liter', isDiscrete: false, remainingRatio: 0.75, location: 'Refrigerator', dateAdded: '2025-11-20T10:00:00Z', perishableDate: '2026-02-26T10:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 2, name: 'Bananas', quantity: 6, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Counter', dateAdded: '2025-11-25T11:30:00Z', perishableDate: '2026-02-24T11:30:00Z', imageSmallUrl: '', url: '' },
+                { id: 3, name: 'Canned Tomatoes', quantity: 2, unit: 'cans', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-11-15T14:00:00Z', perishableDate: '2026-03-25T14:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 4, name: 'Eggs', quantity: 12, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Refrigerator', dateAdded: '2025-11-10T09:00:00Z', perishableDate: '2026-02-11T09:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 5, name: 'Bread', quantity: 1, unit: 'loaf', isDiscrete: false, remainingRatio: 0.5, location: 'Pantry', dateAdded: '2025-11-28T16:00:00Z', perishableDate: '2026-02-07T16:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 6, name: 'Yogurt', quantity: 4, unit: 'cups', isDiscrete: true, remainingRatio: 1, location: 'Refrigerator', dateAdded: '2025-11-18T08:00:00Z', perishableDate: '2026-02-11T08:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 7, name: 'Coffee Beans', quantity: 500, unit: 'grams', isDiscrete: false, remainingRatio: 0.8, location: 'Pantry', dateAdded: '2025-11-17T13:00:00Z', perishableDate: '2026-03-25T13:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 8, name: 'Apples', quantity: 5, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Counter', dateAdded: '2025-11-14T10:00:00Z', perishableDate: '2026-02-08T10:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 9, name: 'Cheese', quantity: 200, unit: 'grams', isDiscrete: false, remainingRatio: 0.6, location: 'Refrigerator', dateAdded: '2025-11-13T15:00:00Z', perishableDate: '2026-02-23T15:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 10, name: 'Pasta', quantity: 1, unit: 'box', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-11-12T12:00:00Z', perishableDate: '2027-03-22T12:00:00Z', imageSmallUrl: '', url: '' },
+            ];
+            inventoryApp.renderLocationFilters(); // To ensure location filters are rendered
+            inventoryApp.render(); // Render to populate the table/cards for filtering/sorting
+        });
         it('switches to card view on smaller screens', () => {
             Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 500 });
             window.dispatchEvent(new window.Event('resize'));
@@ -243,14 +325,23 @@ describe('Smart Pantry Scan', () => {
             expect(itemModal.classList.contains('hidden')).toBe(true);
         });
 
-        it('opens and closes the confirmation modal', () => {
-            const confirmModal = document.getElementById('confirmModal');
-            expect(confirmModal.classList.contains('hidden')).toBe(true);
-            inventoryApp.openConfirmModal(1);
-            expect(confirmModal.classList.contains('hidden')).toBe(false);
-            inventoryApp.closeModal(confirmModal);
-            vi.runAllTimers();
-            expect(confirmModal.classList.contains('hidden')).toBe(true);
-        });
-    });
-});
+                it('opens and closes the confirmation modal', () => {
+
+                    const confirmModal = document.getElementById('confirmModal');
+
+                    expect(confirmModal.classList.contains('hidden')).toBe(true);
+
+                    inventoryApp.openConfirmModal(1);
+
+                    expect(confirmModal.classList.contains('hidden')).toBe(false);
+
+                    inventoryApp.closeModal(confirmModal);
+
+                    vi.runAllTimers();
+
+                    expect(confirmModal.classList.contains('hidden')).toBe(true);
+
+                });
+
+            });
+        })

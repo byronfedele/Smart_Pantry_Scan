@@ -614,6 +614,70 @@ export const inventoryApp = {
         this.selectAllCheckbox.checked = false;
     },
 
+    toggleAllCardsCheckboxes(forceChecked = null) {
+        const allCardCheckboxes = document.querySelectorAll('#inventory-card-list .item-checkbox');
+        const targetCheckedState = (forceChecked !== null) ? forceChecked : !Array.from(allCardCheckboxes).every(cb => cb.checked);
+        allCardCheckboxes.forEach(checkbox => {
+            checkbox.checked = targetCheckedState;
+            this.handleItemCheckboxChange(parseInt(checkbox.dataset.id, 10), targetCheckedState);
+        });
+    },
+
+    clearAllSelections() {
+        this.selectedItems = [];
+        document.querySelectorAll('.item-checkbox').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        this.updateDeleteButtonState();
+        this.render();
+    },
+
+    showSelectAllConfirmation() {
+        this.openModal(this.confirmModal);
+        document.getElementById('confirmModalTitle').textContent = 'Select All Items';
+        document.querySelector('#confirmModal p').textContent = 'Do you want to select all visible items?';
+        this.confirmDeleteBtn.textContent = 'Yes, Select All';
+        this.confirmDeleteBtn.onclick = () => {
+            this.toggleAllCardsCheckboxes(true);
+            this.closeModal(this.confirmModal);
+            this.confirmDeleteBtn.textContent = 'Delete';
+        };
+        this.confirmCancelBtn.onclick = () => {
+            this.closeModal(this.confirmModal);
+            this.confirmDeleteBtn.textContent = 'Delete';
+        };
+    },
+
+    showClearSelectionOptions(itemId) {
+        this.openModal(this.confirmModal);
+        document.getElementById('confirmModalTitle').textContent = 'Selection Options';
+        document.querySelector('#confirmModal p').innerHTML = 'What would you like to do with the selected items?';
+        this.confirmDeleteBtn.textContent = 'Clear All Selections';
+        this.confirmDeleteBtn.onclick = () => {
+            this.clearAllSelections();
+            this.closeModal(this.confirmModal);
+            this.confirmDeleteBtn.textContent = 'Delete';
+        };
+        let deselectThisBtn = document.getElementById('deselectThisBtn');
+        if (!deselectThisBtn) {
+            deselectThisBtn = document.createElement('button');
+            deselectThisBtn.id = 'deselectThisBtn';
+            deselectThisBtn.className = 'py-2 px-4 rounded-lg bg-neutral-light dark:bg-neutral-dark';
+            this.confirmCancelBtn.parentNode.insertBefore(deselectThisBtn, this.confirmCancelBtn);
+        }
+        deselectThisBtn.textContent = 'Deselect This Item';
+        deselectThisBtn.onclick = () => {
+            this.handleItemCheckboxChange(itemId, false);
+            this.closeModal(this.confirmModal);
+            this.confirmDeleteBtn.textContent = 'Delete';
+            this.render();
+        };
+        this.confirmCancelBtn.onclick = () => {
+            this.closeModal(this.confirmModal);
+            this.confirmDeleteBtn.textContent = 'Delete';
+        };
+    },
+
     openInteractionModal(items, barcode) {
         this.interactionList.innerHTML = '';
         items.forEach(item => {
