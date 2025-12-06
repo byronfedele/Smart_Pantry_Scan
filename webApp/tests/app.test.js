@@ -1,81 +1,87 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, jest, afterEach } from '@jest/globals';
 import { JSDOM } from 'jsdom';
 import fs from 'fs';
-import path from 'path';
-import { inventoryApp, barcodeScannerApp } from '../app.js';
+import path, { dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-const html = fs.readFileSync(path.resolve(__dirname, '../SmartPantryScan.html'), 'utf8');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const html = fs.readFileSync(path.resolve(__dirname, '../SmartPantryScan.html'), 'utf8')
+    .replace(/<script>tailwind\.config[\s\S]*?<\/script>/, '')
+    .replace('<script src="https://cdn.tailwindcss.com"></script>', '');
 
 describe('Smart Pantry Scan', () => {
     let dom;
 
-    beforeEach(() => {
-        vi.useFakeTimers();
-        dom = new JSDOM(html, { url: 'http://localhost' });
-        global.document = dom.window.document;
-        global.window = dom.window;
-
-        const localStorageMock = (function() {
-            let store = {};
-            return {
-                getItem(key) { return store[key] || null; },
-                setItem(key, value) { store[key] = value.toString(); },
-                clear() { store = {}; },
-                removeItem(key) { delete store[key]; }
-            };
-        })();
-        Object.defineProperty(window, 'localStorage', { value: localStorageMock, writable: true });
-        global.localStorage = window.localStorage;
-
-        global.fetch = vi.fn();
-
-        Object.defineProperty(window, 'matchMedia', {
-            writable: true,
-            value: vi.fn().mockImplementation(query => ({
-                matches: false,
-                media: query,
-                onchange: null,
-                addListener: vi.fn(),
-                removeListener: vi.fn(),
-                addEventListener: vi.fn(),
-                removeEventListener: vi.fn(),
-                dispatchEvent: vi.fn(),
-            })),
+    beforeEach(done => {
+        jest.useFakeTimers();
+        dom = new JSDOM(html, {
+            url: `file://${path.resolve(__dirname, '../SmartPantryScan.html')}`,
+            runScripts: 'dangerously',
+            resources: 'usable',
         });
 
-        global.ZXing = {
-            BrowserMultiFormatReader: class {
-                constructor() {}
-                decodeFromVideoDevice() {}
-                reset() {}
-            },
-            BarcodeFormat: { EAN_13: 'EAN_13', UPC_A: 'UPC_A' },
-            DecodeHintType: { POSSIBLE_FORMAST: 'POSSIBLE_FORMAST' }
-        };
+        dom.window.addEventListener('DOMContentLoaded', () => {
+            global.window = dom.window;
+            global.document = dom.window.document;
+            global.inventoryApp = dom.window.inventoryApp;
+            global.barcodeScannerApp = dom.window.barcodeScannerApp;
 
-        window.barcodeScannerApp = barcodeScannerApp;
+
+            const localStorageMock = (() => {
+                let store = {};
+                return {
+                    getItem: key => store[key] || null,
+                    setItem: (key, value) => (store[key] = value.toString()),
+                    clear: () => (store = {}),
+                    removeItem: key => delete store[key],
+                };
+            })();
+            Object.defineProperty(window, 'localStorage', { value: localStorageMock, writable: true });
+
+            global.fetch = jest.fn();
+
+            Object.defineProperty(window, 'matchMedia', {
+                writable: true,
+                value: jest.fn().mockImplementation(query => ({
+                    matches: false,
+                    media: query,
+                    onchange: null,
+                    addListener: jest.fn(),
+                    removeListener: jest.fn(),
+                    addEventListener: jest.fn(),
+                    removeEventListener: jest.fn(),
+                    dispatchEvent: jest.fn(),
+                })),
+            });
+
+            global.ZXing = {
+                BrowserMultiFormatReader: class {
+                    decodeFromVideoDevice() {}
+                    reset() {}
+                },
+                BarcodeFormat: {},
+                DecodeHintType: {},
+            };
+
+            done();
+        });
     });
 
     afterEach(() => {
-        vi.restoreAllMocks();
-        vi.useRealTimers();
-    });
-
-    afterEach(() => {
-        vi.restoreAllMocks();
-        vi.useRealTimers();
+        jest.restoreAllMocks();
+        jest.useRealTimers();
+        dom.window.close();
     });
 
     it('should have a title', () => {
-        inventoryApp.init(); // Initialize inventoryApp for this test
         const title = document.querySelector('h1');
         expect(title.textContent).toBe('Smart Pantry Scan');
     });
 
     describe('Inventory Management (CRUD)', () => {
         beforeEach(() => {
-            inventoryApp.init();
-            inventoryApp.inventory = [
+            window.inventoryApp.inventory = [
                 { id: 1, name: 'Milk', quantity: 1, unit: 'Liter', isDiscrete: false, remainingRatio: 0.75, location: 'Refrigerator', dateAdded: '2025-11-20T10:00:00Z', perishableDate: '2026-02-26T10:00:00Z', imageSmallUrl: '', url: '' },
                 { id: 2, name: 'Bananas', quantity: 6, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Counter', dateAdded: '2025-11-25T11:30:00Z', perishableDate: '2026-02-24T11:30:00Z', imageSmallUrl: '', url: '' },
                 { id: 3, name: 'Canned Tomatoes', quantity: 2, unit: 'cans', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-11-15T14:00:00Z', perishableDate: '2026-03-25T14:00:00Z', imageSmallUrl: '', url: '' },
@@ -87,10 +93,10 @@ describe('Smart Pantry Scan', () => {
                 { id: 9, name: 'Cheese', quantity: 200, unit: 'grams', isDiscrete: false, remainingRatio: 0.6, location: 'Refrigerator', dateAdded: '2025-11-13T15:00:00Z', perishableDate: '2026-02-23T15:00:00Z', imageSmallUrl: '', url: '' },
                 { id: 10, name: 'Pasta', quantity: 1, unit: 'box', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-11-12T12:00:00Z', perishableDate: '2027-03-22T12:00:00Z', imageSmallUrl: '', url: '' },
             ];
-            inventoryApp.renderLocationFilters(); // To ensure location filters are rendered
+            window.inventoryApp.renderLocationFilters(); // To ensure location filters are rendered
         });
         it('adds a new continuous item', () => {
-            const initialCount = inventoryApp.inventory.length;
+            const initialCount = window.inventoryApp.inventory.length;
             document.getElementById('itemName').value = 'Almond Milk';
             document.getElementById('itemQuantityNumeric').value = '1';
             document.getElementById('itemUnit').value = 'L';
@@ -98,26 +104,26 @@ describe('Smart Pantry Scan', () => {
             document.getElementById('perishableDateInput').value = '2025-11-01';
             document.getElementById('isDiscrete').checked = false;
 
-            const mockEvent = { preventDefault: vi.fn() };
-            inventoryApp.handleFormSubmit(mockEvent);
+            const mockEvent = { preventDefault: jest.fn() };
+            window.inventoryApp.handleFormSubmit(mockEvent);
 
-            expect(inventoryApp.inventory.length).toBe(initialCount + 1);
-            expect(inventoryApp.inventory[inventoryApp.inventory.length - 1].name).toBe('Almond Milk');
+            expect(window.inventoryApp.inventory.length).toBe(initialCount + 1);
+            expect(window.inventoryApp.inventory[window.inventoryApp.inventory.length - 1].name).toBe('Almond Milk');
         });
 
         it('adds a new discrete item', () => {
-            const initialCount = inventoryApp.inventory.length;
+            const initialCount = window.inventoryApp.inventory.length;
             document.getElementById('itemName').value = 'Eggs';
             document.getElementById('discreteItemQuantity').value = '12';
             document.getElementById('itemLocation').value = 'Fridge';
             document.getElementById('perishableDateInput').value = '2025-11-15';
             document.getElementById('isDiscrete').checked = true;
 
-            const mockEvent = { preventDefault: vi.fn() };
-            inventoryApp.handleFormSubmit(mockEvent);
+            const mockEvent = { preventDefault: jest.fn() };
+            window.inventoryApp.handleFormSubmit(mockEvent);
 
-            expect(inventoryApp.inventory.length).toBe(initialCount + 1);
-            const newItem = inventoryApp.inventory[inventoryApp.inventory.length - 1];
+            expect(window.inventoryApp.inventory.length).toBe(initialCount + 1);
+            const newItem = window.inventoryApp.inventory[window.inventoryApp.inventory.length - 1];
             expect(newItem.name).toBe('Eggs');
             expect(newItem.quantity).toBe(12);
             expect(newItem.isDiscrete).toBe(true);
@@ -131,33 +137,32 @@ describe('Smart Pantry Scan', () => {
             document.getElementById('itemQuantityNumeric').value = '1';
             document.getElementById('isDiscrete').checked = false;
 
-            const mockEvent = { preventDefault: vi.fn() };
-            inventoryApp.handleFormSubmit(mockEvent);
+            const mockEvent = { preventDefault: jest.fn() };
+            window.inventoryApp.handleFormSubmit(mockEvent);
 
-            expect(inventoryApp.inventory[0].name).toBe('Almond Milk');
+            expect(window.inventoryApp.inventory[0].name).toBe('Almond Milk');
         });
 
         it('deletes a single item', () => {
-            const itemToDelete = inventoryApp.inventory[0];
-            inventoryApp.itemToDeleteId = itemToDelete.id;
-            inventoryApp.handleDelete();
-            expect(inventoryApp.inventory.find(item => item.id === itemToDelete.id)).toBeUndefined();
+            const itemToDelete = window.inventoryApp.inventory[0];
+            window.inventoryApp.itemToDeleteId = itemToDelete.id;
+            window.inventoryApp.handleDelete();
+            expect(window.inventoryApp.inventory.find(item => item.id === itemToDelete.id)).toBeUndefined();
         });
 
         it('deletes multiple selected items', () => {
-            const item1 = inventoryApp.inventory[0];
-            const item2 = inventoryApp.inventory[1];
-            inventoryApp.selectedItems = [item1.id, item2.id];
-            inventoryApp.deleteSelectedItems();
-            expect(inventoryApp.inventory.find(item => item.id === item1.id)).toBeUndefined();
-            expect(inventoryApp.inventory.find(item => item.id === item2.id)).toBeUndefined();
+            const item1 = window.inventoryApp.inventory[0];
+            const item2 = window.inventoryApp.inventory[1];
+            window.inventoryApp.selectedItems = [item1.id, item2.id];
+            window.inventoryApp.deleteSelectedItems();
+            expect(window.inventoryApp.inventory.find(item => item.id === item1.id)).toBeUndefined();
+            expect(window.inventoryApp.inventory.find(item => item.id === item2.id)).toBeUndefined();
         });
     });
 
     describe('Filtering and Sorting', () => {
         beforeEach(() => {
-            inventoryApp.init();
-            inventoryApp.inventory = [
+            window.inventoryApp.inventory = [
                 { id: 1, name: 'Milk', quantity: 1, unit: 'Liter', isDiscrete: false, remainingRatio: 0.75, location: 'Refrigerator', dateAdded: '2025-11-20T10:00:00Z', perishableDate: '2026-02-26T10:00:00Z', imageSmallUrl: '', url: '' },
                 { id: 2, name: 'Bananas', quantity: 6, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Counter', dateAdded: '2025-11-25T11:30:00Z', perishableDate: '2026-02-24T11:30:00Z', imageSmallUrl: '', url: '' },
                 { id: 3, name: 'Canned Tomatoes', quantity: 2, unit: 'cans', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-11-15T14:00:00Z', perishableDate: '2026-03-25T14:00:00Z', imageSmallUrl: '', url: '' },
@@ -169,35 +174,34 @@ describe('Smart Pantry Scan', () => {
                 { id: 9, name: 'Cheese', quantity: 200, unit: 'grams', isDiscrete: false, remainingRatio: 0.6, location: 'Refrigerator', dateAdded: '2025-11-13T15:00:00Z', perishableDate: '2026-02-23T15:00:00Z', imageSmallUrl: '', url: '' },
                 { id: 10, name: 'Pasta', quantity: 1, unit: 'box', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-11-12T12:00:00Z', perishableDate: '2027-03-22T12:00:00Z', imageSmallUrl: '', url: '' },
             ];
-            inventoryApp.renderLocationFilters(); // To ensure location filters are rendered
-            inventoryApp.render(); // Render to populate the table/cards for filtering/sorting
+            window.inventoryApp.renderLocationFilters(); // To ensure location filters are rendered
+            window.inventoryApp.render(); // Render to populate the table/cards for filtering/sorting
         });
         it('filters by item name', () => {
             document.getElementById('search').value = 'Milk';
-            inventoryApp.handleFilterChange({ target: document.getElementById('search') });
-            expect(inventoryApp.filteredInventory.length).toBe(1);
-            expect(inventoryApp.filteredInventory[0].name).toBe('Milk');
+            window.inventoryApp.handleFilterChange({ target: document.getElementById('search') });
+            expect(window.inventoryApp.filteredInventory.length).toBe(1);
+            expect(window.inventoryApp.filteredInventory[0].name).toBe('Milk');
         });
 
         it('filters by storage location', () => {
             const pantryCheckbox = document.querySelector('input[value="Pantry"]');
             pantryCheckbox.checked = true;
-            inventoryApp.handleFilterChange({ target: pantryCheckbox });
-            expect(inventoryApp.filteredInventory.every(item => item.location === 'Pantry')).toBe(true);
+            window.inventoryApp.handleFilterChange({ target: pantryCheckbox });
+            expect(window.inventoryApp.filteredInventory.every(item => item.location === 'Pantry')).toBe(true);
         });
 
         it('sorts by name', () => {
             const nameHeader = document.querySelector('th[data-sort="name"]');
-            inventoryApp.handleSort({ target: nameHeader });
-            inventoryApp.render();
-            expect(inventoryApp.filteredInventory[0].name).toBe('Bread');
+            window.inventoryApp.handleSort({ target: nameHeader });
+            window.inventoryApp.render();
+            expect(window.inventoryApp.filteredInventory[0].name).toBe('Apples');
         });
     });
 
     describe('Barcode Scanning', () => {
         beforeEach(() => {
-            inventoryApp.init();
-            inventoryApp.inventory = [
+            window.inventoryApp.inventory = [
                 { id: 1, name: 'Milk', quantity: 1, unit: 'Liter', isDiscrete: false, remainingRatio: 0.75, location: 'Refrigerator', dateAdded: '2025-11-20T10:00:00Z', perishableDate: '2026-02-26T10:00:00Z', imageSmallUrl: '', url: '' },
                 { id: 2, name: 'Bananas', quantity: 6, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Counter', dateAdded: '2025-11-25T11:30:00Z', perishableDate: '2026-02-24T11:30:00Z', imageSmallUrl: '', url: '' },
                 { id: 3, name: 'Canned Tomatoes', quantity: 2, unit: 'cans', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-11-15T14:00:00Z', perishableDate: '2026-03-25T14:00:00Z', imageSmallUrl: '', url: '' },
@@ -209,26 +213,26 @@ describe('Smart Pantry Scan', () => {
                 { id: 9, name: 'Cheese', quantity: 200, unit: 'grams', isDiscrete: false, remainingRatio: 0.6, location: 'Refrigerator', dateAdded: '2025-11-13T15:00:00Z', perishableDate: '2026-02-23T15:00:00Z', imageSmallUrl: '', url: '' },
                 { id: 10, name: 'Pasta', quantity: 1, unit: 'box', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-11-12T12:00:00Z', perishableDate: '2027-03-22T12:00:00Z', imageSmallUrl: '', url: '' },
             ];
-            inventoryApp.renderLocationFilters(); // To ensure location filters are rendered
-            inventoryApp.render(); // Render to populate the table/cards for filtering/sorting
+            window.inventoryApp.renderLocationFilters(); // To ensure location filters are rendered
+            window.inventoryApp.render(); // Render to populate the table/cards for filtering/sorting
         });
         it('pre-fills the form when a new barcode is scanned', async () => {
             const mockResponse = { status: 1, product: { product_name: 'Organic Milk' } };
             fetch.mockResolvedValue({ json: () => Promise.resolve(mockResponse) });
-            await barcodeScannerApp.fetchAndOpenForm('123456789');
+            await window.barcodeScannerApp.fetchAndOpenForm('123456789');
             expect(document.getElementById('itemName').value).toBe('Organic Milk');
         });
 
         it('handles API error during barcode scanning', async () => {
             fetch.mockRejectedValue(new Error('API is down'));
-            const consoleErrorSpy = vi.spyOn(console, 'error');
-            await barcodeScannerApp.fetchAndOpenForm('123456789');
+            const consoleErrorSpy = jest.spyOn(console, 'error');
+            await window.barcodeScannerApp.fetchAndOpenForm('123456789');
             expect(consoleErrorSpy).toHaveBeenCalledWith('API Error:', new Error('API is down'));
         });
 
         it('opens the interaction modal when an existing barcode is scanned', async () => {
-            inventoryApp.inventory.push({ id: 3, name: 'Test Item', barcode: '12345', location: 'Pantry', perishableDate: '2025-12-31T12:00:00Z', dateAdded: '2025-01-01T12:00:00Z', remainingRatio: 1, isDiscrete: false });
-            await barcodeScannerApp.fetchData('12345');
+            window.inventoryApp.inventory.push({ id: 3, name: 'Test Item', barcode: '12345', location: 'Pantry', perishableDate: '2025-12-31T12:00:00Z', dateAdded: '2025-01-01T12:00:00Z', remainingRatio: 1, isDiscrete: false });
+            await window.barcodeScannerApp.fetchData('12345');
             const interactionModal = document.getElementById('interactionModal');
             expect(interactionModal.classList.contains('hidden')).toBe(false);
         });
@@ -236,8 +240,7 @@ describe('Smart Pantry Scan', () => {
 
     describe('Form Logic and Validation', () => {
         beforeEach(() => {
-            inventoryApp.init();
-            inventoryApp.inventory = [
+            window.inventoryApp.inventory = [
                 { id: 1, name: 'Milk', quantity: 1, unit: 'Liter', isDiscrete: false, remainingRatio: 0.75, location: 'Refrigerator', dateAdded: '2025-11-20T10:00:00Z', perishableDate: '2026-02-26T10:00:00Z', imageSmallUrl: '', url: '' },
                 { id: 2, name: 'Bananas', quantity: 6, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Counter', dateAdded: '2025-11-25T11:30:00Z', perishableDate: '2026-02-24T11:30:00Z', imageSmallUrl: '', url: '' },
                 { id: 3, name: 'Canned Tomatoes', quantity: 2, unit: 'cans', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-11-15T14:00:00Z', perishableDate: '2026-03-25T14:00:00Z', imageSmallUrl: '', url: '' },
@@ -249,8 +252,8 @@ describe('Smart Pantry Scan', () => {
                 { id: 9, name: 'Cheese', quantity: 200, unit: 'grams', isDiscrete: false, remainingRatio: 0.6, location: 'Refrigerator', dateAdded: '2025-11-13T15:00:00Z', perishableDate: '2026-02-23T15:00:00Z', imageSmallUrl: '', url: '' },
                 { id: 10, name: 'Pasta', quantity: 1, unit: 'box', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-11-12T12:00:00Z', perishableDate: '2027-03-22T12:00:00Z', imageSmallUrl: '', url: '' },
             ];
-            inventoryApp.renderLocationFilters(); // To ensure location filters are rendered
-            inventoryApp.render(); // Render to populate the table/cards for filtering/sorting
+            window.inventoryApp.renderLocationFilters(); // To ensure location filters are rendered
+            window.inventoryApp.render(); // Render to populate the table/cards for filtering/sorting
         });
         it('toggles input fields when "Is Discrete" is checked', () => {
             const continuousInput = document.getElementById('continuousQuantityInput');
@@ -262,31 +265,30 @@ describe('Smart Pantry Scan', () => {
         });
 
         it('adds an item when required fields are present', () => {
-            const initialCount = inventoryApp.inventory.length;
+            const initialCount = window.inventoryApp.inventory.length;
             document.getElementById('itemName').value = 'Test Item';
             document.getElementById('itemLocation').value = 'Test Location';
             document.getElementById('perishableDateInput').value = '2025-01-01';
             document.getElementById('isDiscrete').checked = false; // Ensure correct mode
             document.getElementById('itemQuantityNumeric').value = '1';
 
-            const mockEvent = { preventDefault: vi.fn() };
-            inventoryApp.handleFormSubmit(mockEvent);
+            const mockEvent = { preventDefault: jest.fn() };
+            window.inventoryApp.handleFormSubmit(mockEvent);
 
-            expect(inventoryApp.inventory.length).toBe(initialCount + 1);
+            expect(window.inventoryApp.inventory.length).toBe(initialCount + 1);
         });
 
         it('prevents form submission if required fields are empty', () => {
-            const initialCount = inventoryApp.inventory.length;
-            const mockEvent = { preventDefault: vi.fn() };
-            inventoryApp.handleFormSubmit(mockEvent);
-            expect(inventoryApp.inventory.length).toBe(initialCount);
+            const initialCount = window.inventoryApp.inventory.length;
+            const mockEvent = { preventDefault: jest.fn() };
+            window.inventoryApp.handleFormSubmit(mockEvent);
+            expect(window.inventoryApp.inventory.length).toBe(initialCount);
         });
     });
 
     describe('UI and Responsiveness', () => {
         beforeEach(() => {
-            inventoryApp.init();
-            inventoryApp.inventory = [
+            window.inventoryApp.inventory = [
                 { id: 1, name: 'Milk', quantity: 1, unit: 'Liter', isDiscrete: false, remainingRatio: 0.75, location: 'Refrigerator', dateAdded: '2025-11-20T10:00:00Z', perishableDate: '2026-02-26T10:00:00Z', imageSmallUrl: '', url: '' },
                 { id: 2, name: 'Bananas', quantity: 6, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Counter', dateAdded: '2025-11-25T11:30:00Z', perishableDate: '2026-02-24T11:30:00Z', imageSmallUrl: '', url: '' },
                 { id: 3, name: 'Canned Tomatoes', quantity: 2, unit: 'cans', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-11-15T14:00:00Z', perishableDate: '2026-03-25T14:00:00Z', imageSmallUrl: '', url: '' },
@@ -298,8 +300,8 @@ describe('Smart Pantry Scan', () => {
                 { id: 9, name: 'Cheese', quantity: 200, unit: 'grams', isDiscrete: false, remainingRatio: 0.6, location: 'Refrigerator', dateAdded: '2025-11-13T15:00:00Z', perishableDate: '2026-02-23T15:00:00Z', imageSmallUrl: '', url: '' },
                 { id: 10, name: 'Pasta', quantity: 1, unit: 'box', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-11-12T12:00:00Z', perishableDate: '2027-03-22T12:00:00Z', imageSmallUrl: '', url: '' },
             ];
-            inventoryApp.renderLocationFilters(); // To ensure location filters are rendered
-            inventoryApp.render(); // Render to populate the table/cards for filtering/sorting
+            window.inventoryApp.renderLocationFilters(); // To ensure location filters are rendered
+            window.inventoryApp.render(); // Render to populate the table/cards for filtering/sorting
         });
         it('switches to card view on smaller screens', () => {
             Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 500 });
@@ -309,39 +311,31 @@ describe('Smart Pantry Scan', () => {
         });
 
         it('switches theme and persists in localStorage', () => {
-            const setItemSpy = vi.spyOn(window.localStorage, 'setItem');
+            const setItemSpy = jest.spyOn(window.localStorage, 'setItem');
             document.documentElement.classList.remove('dark');
-            inventoryApp.toggleTheme();
+            window.inventoryApp.toggleTheme();
             expect(setItemSpy).toHaveBeenCalledWith('theme', 'dark');
         });
 
         it('opens and closes the add/edit item modal', () => {
             const itemModal = document.getElementById('itemModal');
             expect(itemModal.classList.contains('hidden')).toBe(true);
-            inventoryApp.openItemForm();
+            window.inventoryApp.openItemForm();
             expect(itemModal.classList.contains('hidden')).toBe(false);
-            inventoryApp.closeModal(itemModal);
-            vi.runAllTimers();
+            window.inventoryApp.closeModal(itemModal);
+            jest.runAllTimers();
             expect(itemModal.classList.contains('hidden')).toBe(true);
         });
 
-                it('opens and closes the confirmation modal', () => {
-
-                    const confirmModal = document.getElementById('confirmModal');
-
-                    expect(confirmModal.classList.contains('hidden')).toBe(true);
-
-                    inventoryApp.openConfirmModal(1);
-
-                    expect(confirmModal.classList.contains('hidden')).toBe(false);
-
-                    inventoryApp.closeModal(confirmModal);
-
-                    vi.runAllTimers();
-
-                    expect(confirmModal.classList.contains('hidden')).toBe(true);
-
-                });
+        it('opens and closes the confirmation modal', () => {
+            const confirmModal = document.getElementById('confirmModal');
+            expect(confirmModal.classList.contains('hidden')).toBe(true);
+            window.inventoryApp.openConfirmModal(1);
+            expect(confirmModal.classList.contains('hidden')).toBe(false);
+            window.inventoryApp.closeModal(confirmModal);
+            jest.runAllTimers();
+            expect(confirmModal.classList.contains('hidden')).toBe(true);
+        });
 
             });
         })
