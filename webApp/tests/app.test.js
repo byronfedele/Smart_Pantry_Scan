@@ -4,7 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import { inventoryApp, barcodeScannerApp } from '../app.js';
 
-const html = fs.readFileSync(path.resolve(__dirname, '../SmartPantryScan.html'), 'utf8');
+const html = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf8');
 
 describe('Smart Pantry Scan', () => {
     let dom;
@@ -14,6 +14,8 @@ describe('Smart Pantry Scan', () => {
         dom = new JSDOM(html, { url: 'http://localhost' });
         global.document = dom.window.document;
         global.window = dom.window;
+        global.alert = vi.fn();
+        global.Event = dom.window.Event;
 
         const localStorageMock = (function() {
             let store = {};

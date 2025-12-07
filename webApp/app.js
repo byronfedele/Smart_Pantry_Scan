@@ -1,3 +1,6 @@
+import { BarcodeScanner, BarcodeFormat } from '@capacitor-mlkit/barcode-scanning';
+import { Capacitor } from '@capacitor/core';
+
 export const inventoryApp = {
     inventory: [],
     filteredInventory: [],
@@ -738,7 +741,7 @@ export const barcodeScannerApp = {
 
     init(inventoryApp) {
         this.inventoryApp = inventoryApp;
-        if (typeof ZXing !== 'undefined') {
+        if (!Capacitor.isNativePlatform() && typeof ZXing !== 'undefined') {
             const hints = new Map();
             const formats = [ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.UPC_A, ZXing.BarcodeFormat.EAN_8, ZXing.BarcodeFormat.UPC_E, ZXing.BarcodeFormat.CODE_128];
             hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, formats);
@@ -746,83 +749,120 @@ export const barcodeScannerApp = {
         }
     },
 
+    async requestPermissions() {
+        await BarcodeScanner.requestPermissions();
+    },
+
+    async scan() {
+        const { barcodes } = await BarcodeScanner.scan({
+            formats: [
+                BarcodeFormat.Ean13,
+                BarcodeFormat.Upca,
+                BarcodeFormat.Ean8,
+                BarcodeFormat.Upce,
+                BarcodeFormat.Code128,
+            ],
+        });
+        return barcodes[0].rawValue;
+    },
+
     async startScan() {
-        const videoElement = document.getElementById('barcodeVideo');
-        const modal = document.getElementById('barcodeScanModal');
-        const statusEl = document.getElementById('barcodeStatus');
-
-        this.inventoryApp.openModal(modal);
-        statusEl.textContent = 'Requesting camera access...';
-
-        try {
-            this.codeReader.decodeFromVideoDevice(undefined, videoElement, (result, err) => {
-                if (result) {
-                    statusEl.textContent = `Found barcode: ${result.getText()}`;
-                    this.playScanSuccessSound();
-                    this.fetchData(result.getText());
-                    this.stopScan();
+        if (Capacitor.isNativePlatform()) {
+            await this.requestPermissions();
+            try {
+                const barcode = await this.scan();
+                if (barcode) {
+                    this.fetchData(barcode);
                 }
-                if (err && !(err instanceof ZXing.NotFoundException)) {
-                    console.error(err);
-                    statusEl.textContent = `Error: ${err}`;
-                }
-            });
-            statusEl.textContent = 'Searching for barcode...';
+            } catch (error) {
+                console.error('Error scanning barcode:', error);
+            }
+        } else {
+            const videoElement = document.getElementById('barcodeVideo');
+            const modal = document.getElementById('barcodeScanModal');
+            const statusEl = document.getElementById('barcodeStatus');
 
-            videoElement.addEventListener('loadedmetadata', () => {
-                if (videoElement.srcObject) {
-                    const track = videoElement.srcObject.getVideoTracks()[0];
-                    if (track) {
-                        this.videoTrack = track;
-                        const capabilities = track.getCapabilities();
-                        if (capabilities.torch) {
-                            this.inventoryApp.toggleFlashlightBtn.classList.remove('hidden');
-                            this.inventoryApp.toggleFlashlightBtn.classList.remove('bg-yellow-500');
-                            this.inventoryApp.toggleFlashlightBtn.classList.add('bg-gray-500');
+            this.inventoryApp.openModal(modal);
+            statusEl.textContent = 'Requesting camera access...';
+
+            try {
+                this.codeReader.decodeFromVideoDevice(undefined, videoElement, (result, err) => {
+                    if (result) {
+                        statusEl.textContent = `Found barcode: ${result.getText()}`;
+                        this.playScanSuccessSound();
+                        this.fetchData(result.getText());
+                        this.stopScan();
+                    }
+                    if (err && !(err instanceof ZXing.NotFoundException)) {
+                        console.error(err);
+                        statusEl.textContent = `Error: ${err}`;
+                    }
+                });
+                statusEl.textContent = 'Searching for barcode...';
+
+                videoElement.addEventListener('loadedmetadata', () => {
+                    if (videoElement.srcObject) {
+                        const track = videoElement.srcObject.getVideoTracks()[0];
+                        if (track) {
+                            this.videoTrack = track;
+                            const capabilities = track.getCapabilities();
+                            if (capabilities.torch) {
+                                this.inventoryApp.toggleFlashlightBtn.classList.remove('hidden');
+                                this.inventoryApp.toggleFlashlightBtn.classList.remove('bg-yellow-500');
+                                this.inventoryApp.toggleFlashlightBtn.classList.add('bg-gray-500');
+                            } else {
+                                this.inventoryApp.toggleFlashlightBtn.classList.add('hidden');
+                            }
                         } else {
                             this.inventoryApp.toggleFlashlightBtn.classList.add('hidden');
                         }
                     } else {
                         this.inventoryApp.toggleFlashlightBtn.classList.add('hidden');
                     }
-                } else {
-                    this.inventoryApp.toggleFlashlightBtn.classList.add('hidden');
-                }
-                if (statusEl.textContent === 'Requesting camera access...' || statusEl.textContent.includes('Camera access denied')) {
-                    statusEl.textContent = 'Searching for barcode...';
-                }
-            }, { once: true });
+                    if (statusEl.textContent === 'Requesting camera access...' || statusEl.textContent.includes('Camera access denied')) {
+                        statusEl.textContent = 'Searching for barcode...';
+                    }
+                }, { once: true });
 
-        } catch (err) {
-            console.error('Camera Error:', err);
-            statusEl.textContent = 'Camera access denied or not available.';
-            this.inventoryApp.toggleFlashlightBtn.classList.add('hidden');
+            } catch (err) {
+                console.error('Camera Error:', err);
+                statusEl.textContent = 'Camera access denied or not available.';
+                this.inventoryApp.toggleFlashlightBtn.classList.add('hidden');
+            }
         }
     },
 
     stopScan() {
-        if (this.codeReader) {
-            this.codeReader.reset();
+        if (Capacitor.isNativePlatform()) {
+            return;
+        } else {
+            if (this.codeReader) {
+                this.codeReader.reset();
+            }
+            this.inventoryApp.closeModal(document.getElementById('barcodeScanModal'));
+            if (this.isTorchOn && this.videoTrack) {
+                this.videoTrack.applyConstraints({ advanced: [{ torch: false }] });
+                this.isTorchOn = false;
+            }
+            this.inventoryApp.toggleFlashlightBtn.classList.add('hidden');
+            this.videoTrack = null;
         }
-        this.inventoryApp.closeModal(document.getElementById('barcodeScanModal'));
-        if (this.isTorchOn && this.videoTrack) {
-            this.videoTrack.applyConstraints({ advanced: [{ torch: false }] });
-            this.isTorchOn = false;
-        }
-        this.inventoryApp.toggleFlashlightBtn.classList.add('hidden');
-        this.videoTrack = null;
     },
 
     async toggleFlashlight() {
-        if (!this.videoTrack) return;
-        this.isTorchOn = !this.isTorchOn;
-        try {
-            await this.videoTrack.applyConstraints({ advanced: [{ torch: this.isTorchOn }] });
-            this.inventoryApp.toggleFlashlightBtn.classList.toggle('bg-yellow-500', this.isTorchOn);
-            this.inventoryApp.toggleFlashlightBtn.classList.toggle('bg-gray-500', !this.isTorchOn);
-        } catch (error) {
-            console.error('Error setting torch:', error);
+        if (Capacitor.isNativePlatform()) {
+            await BarcodeScanner.toggleTorch();
+        } else {
+            if (!this.videoTrack) return;
             this.isTorchOn = !this.isTorchOn;
+            try {
+                await this.videoTrack.applyConstraints({ advanced: [{ torch: this.isTorchOn }] });
+                this.inventoryApp.toggleFlashlightBtn.classList.toggle('bg-yellow-500', this.isTorchOn);
+                this.inventoryApp.toggleFlashlightBtn.classList.toggle('bg-gray-500', !this.isTorchOn);
+            } catch (error) {
+                console.error('Error setting torch:', error);
+                this.isTorchOn = !this.isTorchOn;
+            }
         }
     },
 
