@@ -1,3 +1,5 @@
+const { Camera } = typeof Capacitor !== 'undefined' && Capacitor.Plugins ? Capacitor.Plugins : { Camera: null };
+
 export const inventoryApp = {
     inventory: [],
     filteredInventory: [],
@@ -735,6 +737,9 @@ export const barcodeScannerApp = {
     codeReader: null,
     isTorchOn: false,
     videoTrack: null,
+    cameraPlugin: typeof window !== 'undefined' && window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Camera
+        ? window.Capacitor.Plugins.Camera
+        : null,
 
     init(inventoryApp) {
         this.inventoryApp = inventoryApp;
@@ -755,6 +760,20 @@ export const barcodeScannerApp = {
         statusEl.textContent = 'Requesting camera access...';
 
         try {
+            // Conditionally check and request camera permissions using Capacitor's Camera plugin
+            if (this.cameraPlugin) {
+                let permissions = await this.cameraPlugin.checkPermissions();
+                if (permissions.camera !== 'granted') {
+                    permissions = await this.cameraPlugin.requestPermissions({ permissions: ['camera'] });
+                    if (permissions.camera !== 'granted') {
+                        statusEl.textContent = 'Camera access denied. Please grant camera permission in your device settings.';
+                        this.inventoryApp.toggleFlashlightBtn.classList.add('hidden');
+                        this.stopScan(); // Stop scan and close modal if permission not granted
+                        return; // Exit if permission not granted
+                    }
+                }
+            }
+
             this.codeReader.decodeFromVideoDevice(undefined, videoElement, (result, err) => {
                 if (result) {
                     statusEl.textContent = `Found barcode: ${result.getText()}`;
