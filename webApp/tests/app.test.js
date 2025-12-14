@@ -4,7 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import { inventoryApp, barcodeScannerApp } from '../app.js';
 
-const html = fs.readFileSync(path.resolve(__dirname, '../SmartPantryScan.html'), 'utf8');
+const html = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf8');
 
 describe('Smart Pantry Scan', () => {
     let dom;

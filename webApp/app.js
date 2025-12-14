@@ -259,6 +259,8 @@ export const inventoryApp = {
 
         const itemIdInput = document.getElementById('itemId');
         const itemBarcodeInput = document.getElementById('itemBarcode');
+        const itemImageElement = document.getElementById('itemImage'); // Moved declaration here
+
         itemIdInput.value = item ? item.id : '';
         itemBarcodeInput.value = item ? item.barcode : '';
         this.currentItemDateAdded = item ? new Date(item.dateAdded) : new Date();
@@ -266,8 +268,16 @@ export const inventoryApp = {
         if (item) {
             document.getElementById('itemName').value = item.name;
             document.getElementById('itemLocation').value = item.location;
-            document.getElementById('itemImage').src = item.imageSmallUrl || '';
-            document.getElementById('itemImage').classList.toggle('hidden', !item.imageSmallUrl);
+            
+            const itemImageElement = document.getElementById('itemImage'); // Get reference to image element
+            if (item.imageSmallUrl) { // Check if there's a stored image URL
+                itemImageElement.src = item.imageSmallUrl;
+                itemImageElement.classList.remove('hidden'); // Show the image
+            } else {
+                itemImageElement.src = ''; // Set to empty string
+                itemImageElement.classList.add('hidden'); // Hide the image
+            }
+
             document.getElementById('itemUrl').value = item.url || '';
             document.getElementById('isDiscrete').checked = item.isDiscrete || false;
 
@@ -281,7 +291,9 @@ export const inventoryApp = {
             }
             this.perishableDateInput.value = item.perishableDate ? item.perishableDate.split('T')[0] : '';
         } else {
-            document.getElementById('itemImage').classList.add('hidden');
+            // Handle item image for new item
+            itemImageElement.src = ''; // Always empty src for new items
+            itemImageElement.classList.add('hidden'); // Always hidden for new items
             document.getElementById('isDiscrete').checked = false;
             document.getElementById('itemQuantityNumeric').value = 1;
             document.getElementById('itemUnit').value = '';
@@ -348,7 +360,7 @@ export const inventoryApp = {
             location: document.getElementById('itemLocation').value,
             perishableDate: document.getElementById('perishableDateInput').value ? new Date(document.getElementById('perishableDateInput').value).toISOString() : null,
             lastModified: new Date().toISOString(),
-            imageSmallUrl: document.getElementById('itemImage').src.endsWith('SmartPantryScan.html') ? '' : document.getElementById('itemImage').src,
+            imageSmallUrl: (document.getElementById('itemImage').src === window.location.href || document.getElementById('itemImage').src === '') ? '' : document.getElementById('itemImage').src,
             url: document.getElementById('itemUrl').value,
         };
 
