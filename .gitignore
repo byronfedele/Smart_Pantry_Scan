@@ -76,3 +76,6 @@ yarn-error.log
 
 # Ngrok
 ngrok.log
+
+# Gemini related files
+GEMINI.md
