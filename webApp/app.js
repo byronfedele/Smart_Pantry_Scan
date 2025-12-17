@@ -519,8 +519,12 @@ export const inventoryApp = {
             const isSelected = this.selectedItems.includes(item.id);
             const daysRemaining = item.perishableDate ? Math.floor((new Date(item.perishableDate) - new Date()) / (1000 * 60 * 60 * 24)) : null;
             let expiryText = daysRemaining !== null ? (daysRemaining < 0 ? '<span class="text-red-500 font-bold">Expired!</span>' : (daysRemaining <= 3 ? `<span class="text-orange-500 font-bold">${daysRemaining} days left</span>` : `${daysRemaining} days left`)) : 'N/A';
+            if (daysRemaining !== null && daysRemaining >= 0 && daysRemaining <= this.expiringDays) {
+                row.classList.add('bg-warning-bg', 'dark:bg-[#2C1810]');
+                expiryText = `<span class="text-warning-text dark:text-[#FDBA74] font-bold">${daysRemaining} days left</span>`;
+            }
             row.innerHTML = `
-                <td class="p-4"><input type="checkbox" class="item-checkbox h-4 w-4 text-primary-dark focus:ring-primary-dark border-gray-300 rounded" data-id="${item.id}" ${isSelected ? 'checked' : ''}></td>
+                <td class="p-4"><input type="checkbox" class="item-checkbox h-4 w-4 text-brand-green focus:ring-brand-green border-gray-300 rounded" data-id="${item.id}" ${isSelected ? 'checked' : ''}></td>
                 <td class="p-4">${item.name}</td>
                 <td class="p-4">
                     ${item.isDiscrete ? `<span>${item.quantity}</span>` :
@@ -548,14 +552,18 @@ export const inventoryApp = {
             const daysRemaining = item.perishableDate ? Math.floor((new Date(item.perishableDate) - new Date()) / (1000 * 60 * 60 * 24)) : null;
             let expiryText = daysRemaining !== null ? (daysRemaining < 0 ? '<span class="text-red-500 font-bold">Expired!</span>' : (daysRemaining <= 3 ? `<span class="text-orange-500 font-bold">${daysRemaining} days left</span>` : `${daysRemaining} days left`)) : 'N/A';
             const card = document.createElement('div');
-            card.className = 'bg-primary-light dark:bg-tertiary-dark rounded-lg shadow-md p-4 relative cursor-pointer';
+            card.className = 'bg-surface-light dark:bg-surface-dark rounded-card shadow-md p-4 relative cursor-pointer';
+            if (daysRemaining !== null && daysRemaining >= 0 && daysRemaining <= this.expiringDays) {
+                card.classList.add('bg-warning-bg', 'dark:bg-[#2C1810]');
+                expiryText = `<span class="text-warning-text dark:text-[#FDBA74] font-bold">${daysRemaining} days left</span>`;
+            }
             card.dataset.id = item.id;
             card.innerHTML = `
                 <div class="absolute top-2 right-2">
-                    <input type="checkbox" class="item-checkbox h-4 w-4 text-primary-dark focus:ring-primary-dark border-gray-300 rounded" data-id="${item.id}" ${isSelected ? 'checked' : ''}>
+                    <input type="checkbox" class="item-checkbox h-4 w-4 text-brand-green focus:ring-brand-green border-gray-300 rounded" data-id="${item.id}" ${isSelected ? 'checked' : ''}>
                 </div>
-                <h3 class="text-lg font-semibold text-primary-dark dark:text-primary-light mb-1">${item.name}</h3>
-                <p class="text-sm text-neutral-dark dark:text-neutral-light mb-2">Location: ${item.location}</p>
+                <h3 class="text-lg font-semibold text-text-main dark:text-text-inv mb-1">${item.name}</h3>
+                <p class="text-sm text-text-muted dark:text-text-muted-dark mb-2">Location: ${item.location}</p>
                 <div class="mb-2">
                     <span class="text-sm font-medium text-neutral-dark dark:text-neutral-light">Amount: </span>
                     ${item.isDiscrete ? `<span>${item.quantity} ${item.unit || ''}</span>` :

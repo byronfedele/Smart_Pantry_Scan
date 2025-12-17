@@ -35,13 +35,32 @@
             theme: {
                 extend: {
                     colors: {
-                        'primary-dark': '#00424a', 'primary-light': '#edfcff',
-                        'secondary-dark': '#273f43', 'secondary-light': '#dbf6fa',
-                        'tertiary-dark': '#2f3b58', 'tertiary-light': '#bac6ea',
-                        'app-bg': '#cde7ec', 'error': '#de3730',
-                        'neutral-dark': '#393c3d', 'neutral-light': '#f8fafa',
+                        // Backgrounds
+                        'app-bg': '#F2F5F3',          // Light Mode Background (Soft Mint Grey)
+                        'app-bg-dark': '#0C1210',     // Dark Mode Background (Deep Forest)
+
+                        // Cards / Surfaces
+                        'surface-light': '#FFFFFF',   // Light Mode Card (Pure White)
+                        'surface-dark': '#14201D',    // Dark Mode Card (Matte Deep Green)
+
+                        // Typography
+                        'text-main': '#111827',       // Light Mode Text (Near Black)
+                        'text-inv': '#ECFDF5',        // Dark Mode Text (Mint White)
+                        'text-muted': '#6B7280',      // Light Mode Secondary Text
+                        'text-muted-dark': '#6E8E85', // Dark Mode Secondary Text
+
+                        // Accents (Shared across modes)
+                        'brand-green': '#10B981',     // Vibrant Spring Green (Buttons/Icons)
+                        'brand-hover': '#059669',     // Darker Green for hover states
+                        'danger': '#EF4444',          // Red for Delete/Error
+                        'warning-bg': '#FFEDD5',      // Light Orange bg for expiring
+                        'warning-text': '#C2410C',    // Dark Orange text for expiring
                     },
-                    fontFamily: { sans: ['Inter', 'sans-serif'], },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    borderRadius: {
+                        'card': '1.5rem', // 24px - Large rounded corners for cards
+                        'pill': '9999px', // Full rounded for buttons
+                    }
                 },
             },
         }
@@ -50,20 +69,20 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="bg-app-bg dark:bg-secondary-dark font-sans text-neutral-dark dark:text-neutral-light transition-colors duration-300">
+<body class="bg-app-bg dark:bg-app-bg-dark text-text-main dark:text-text-inv font-sans transition-colors duration-300">
 
     <div id="app" class="min-h-screen p-4 sm:p-6 lg:p-8">
         <div class="max-w-7xl mx-auto">
             <!-- Header -->
             <header class="flex justify-between items-center mb-6 safe-top-padding">
-                <h1 class="text-2xl sm:text-3xl font-bold text-primary-dark dark:text-primary-light">Smart Pantry Scan</h1>
+                <h1 class="text-2xl sm:text-3xl font-bold text-text-main dark:text-text-inv">Smart Pantry Scan</h1>
                 <div class="flex items-center space-x-2 sm:space-x-4">
-                    <button id="donateBtn" class="p-2 rounded-full bg-secondary-light dark:bg-tertiary-dark text-primary-dark dark:text-primary-light custom-focus-ring transition-colors duration-300">
+                    <button id="donateBtn" class="p-2 rounded-full bg-surface-light dark:bg-surface-dark text-brand-green custom-focus-ring transition-colors duration-300">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
                         </svg>
                     </button>
-                    <button id="theme-toggle" class="p-2 rounded-full bg-secondary-light dark:bg-tertiary-dark text-primary-dark dark:text-primary-light custom-focus-ring transition-colors duration-300">
+                    <button id="theme-toggle" class="p-2 rounded-full bg-surface-light dark:bg-surface-dark text-brand-green custom-focus-ring transition-colors duration-300">
                         <svg id="theme-icon-light" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                         <svg id="theme-icon-dark" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
                     </button>
@@ -71,38 +90,38 @@
             </header>
 
             <!-- Filters -->
-            <div class="bg-primary-light dark:bg-tertiary-dark p-4 rounded-lg shadow-md mb-6">
+            <div class="bg-surface-light dark:bg-surface-dark p-4 rounded-card shadow-sm mb-6">
                 <details>
-                    <summary class="font-semibold text-lg cursor-pointer text-primary-dark dark:text-primary-light flex justify-between items-center">
+                    <summary class="font-semibold text-lg cursor-pointer text-text-main dark:text-text-inv flex justify-between items-center">
                         <span>Organize & Filter</span>
                         <svg class="w-6 h-6 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </summary>
                     <div id="filters" class="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div>
-                            <label for="search" class="block text-sm font-medium text-neutral-dark dark:text-neutral-light mb-1">Search by Name</label>
-                            <input type="text" id="search" placeholder="e.g., Laptop" class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-neutral-light custom-focus-ring dark:placeholder-neutral-light">
+                            <label for="search" class="block text-sm font-medium text-text-muted dark:text-text-muted-dark mb-1">Search by Name</label>
+                            <input type="text" id="search" placeholder="e.g., Milk" class="w-full p-2 rounded-xl bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-[#2A3F38] custom-focus-ring dark:placeholder-gray-500">
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-neutral-dark dark:text-neutral-light mb-1">Storage Location</label>
-                            <div id="locationFilters" class="max-h-24 overflow-y-auto space-y-1 p-2 bg-white dark:bg-tertiary-dark rounded-md border border-tertiary-light dark:border-tertiary-dark">
+                            <label class="block text-sm font-medium text-text-muted dark:text-text-muted-dark mb-1">Storage Location</label>
+                            <div id="locationFilters" class="max-h-24 overflow-y-auto space-y-1 p-2 bg-surface-light dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-[#2A3F38]">
                             </div>
                         </div>
 
                         <div class="flex items-center">
-                            <input type="checkbox" id="showSpoiled" class="mr-2 h-4 w-4 text-primary-dark focus:ring-primary-dark border-gray-300 rounded">
-                            <label for="showSpoiled" class="text-sm font-medium text-neutral-dark dark:text-neutral-light">Show Spoiled</label>
+                            <input type="checkbox" id="showSpoiled" class="mr-2 h-4 w-4 text-brand-green focus:ring-brand-green border-gray-300 rounded">
+                            <label for="showSpoiled" class="text-sm font-medium text-text-main dark:text-text-inv">Show Spoiled</label>
                         </div>
 
                         <div class="flex items-center">
-                            <input type="checkbox" id="showExpiringSoon" class="mr-2 h-4 w-4 text-primary-dark focus:ring-primary-dark border-gray-300 rounded">
-                            <label for="showExpiringSoon" class="text-sm font-medium text-neutral-dark dark:text-neutral-light">Expiring in</label>
-                            <input type="number" id="expiringDays" value="3" min="1" class="ml-2 w-16 p-1 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-neutral-light custom-focus-ring text-center">
-                            <span class="ml-1 text-sm font-medium text-neutral-dark dark:text-neutral-light">days</span>
+                            <input type="checkbox" id="showExpiringSoon" class="mr-2 h-4 w-4 text-brand-green focus:ring-brand-green border-gray-300 rounded">
+                            <label for="showExpiringSoon" class="text-sm font-medium text-text-main dark:text-text-inv">Expiring in</label>
+                            <input type="number" id="expiringDays" value="3" min="1" class="ml-2 w-16 p-1 rounded-xl bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-[#2A3F38] custom-focus-ring text-center">
+                            <span class="ml-1 text-sm font-medium text-text-main dark:text-text-inv">days</span>
                         </div>
                         <div class="md:hidden">
-                            <label for="mobileSort" class="block text-sm font-medium text-neutral-dark dark:text-neutral-light mb-1">Sort by</label>
-                            <select id="mobileSort" class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-neutral-light custom-focus-ring">
+                            <label for="mobileSort" class="block text-sm font-medium text-text-muted dark:text-text-muted-dark mb-1">Sort by</label>
+                            <select id="mobileSort" class="w-full p-2 rounded-xl bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-[#2A3F38] custom-focus-ring">
                                 <option value="dateAdded_desc">Date Added (Newest)</option>
                                 <option value="dateAdded_asc">Date Added (Oldest)</option>
                                 <option value="spoilage_asc" selected>Spoilage in (Soonest)</option>
@@ -115,7 +134,7 @@
                         </div>
                     </div>
                     <div class="mt-4 flex justify-end">
-                        <button id="clearAllFiltersBtn" class="bg-error hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-300 custom-focus-ring">
+                        <button id="clearAllFiltersBtn" class="bg-danger hover:bg-red-700 text-white font-bold py-2 px-4 rounded-pill shadow-md transition-all duration-300 custom-focus-ring">
                             Clear Filters
                         </button>
                     </div>
@@ -123,12 +142,12 @@
             </div>
 
             <!-- Inventory Table -->
-            <div id="inventory-table-container" class="bg-primary-light dark:bg-tertiary-dark rounded-lg shadow-lg overflow-hidden">
+            <div id="inventory-table-container" class="bg-surface-light dark:bg-surface-dark rounded-card shadow-md overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="w-full min-w-[640px]">
-                        <thead class="bg-secondary-light dark:bg-tertiary-dark">
+                        <thead class="bg-gray-50 dark:bg-gray-800/50">
                             <tr>
-                                <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider"><input type="checkbox" id="selectAllCheckbox" class="h-4 w-4 text-primary-dark focus:ring-primary-dark border-gray-300 rounded"></th>
+                                <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider"><input type="checkbox" id="selectAllCheckbox" class="h-4 w-4 text-brand-green focus:ring-brand-green border-gray-300 rounded"></th>
                                 <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider cursor-pointer" data-sort="name">Name</th>
                                 <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider cursor-pointer" data-sort="amountRemaining">Amount Remaining</th>
                                 <th class="p-4 text-left text-sm font-semibold uppercase tracking-wider cursor-pointer" data-sort="spoilage">Spoilage in</th>
@@ -159,15 +178,15 @@
 
     <!-- Add/Edit Item Modal -->
     <div id="itemModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-primary-light dark:bg-secondary-dark rounded-lg shadow-xl w-full max-w-md sm:max-w-lg px-4 pb-4 sm:px-6 sm:pb-6 modal-enter flex flex-col max-h-full">
-            <div class="sticky top-0 bg-primary-light dark:bg-secondary-dark z-10 pb-4 px-4 pt-4 rounded-t-lg">
+        <div class="bg-surface-light dark:bg-surface-dark rounded-card shadow-xl w-full max-w-md sm:max-w-lg px-4 pb-4 sm:px-6 sm:pb-6 modal-enter flex flex-col max-h-full">
+            <div class="sticky top-0 bg-surface-light dark:bg-surface-dark z-10 pb-4 px-4 pt-4 rounded-t-card">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 id="modalTitle" class="text-2xl font-bold text-primary-dark dark:text-primary-light">Add New Item</h2>
-                    <button id="closeItemModalBtn" class="p-2 rounded-full bg-secondary-light dark:bg-tertiary-dark text-primary-dark dark:text-primary-light custom-focus-ring transition-colors duration-300">
+                    <h2 id="modalTitle" class="text-2xl font-bold text-text-main dark:text-text-inv">Add New Item</h2>
+                    <button id="closeItemModalBtn" class="p-2 rounded-full bg-gray-200 dark:bg-[#1F2E28] text-gray-700 dark:text-gray-300 custom-focus-ring transition-colors duration-300">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
-                <button id="scanBarcodeInFormBtn" class="flex items-center justify-center w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-300 custom-focus-ring mb-4">
+                <button id="scanBarcodeInFormBtn" class="flex items-center justify-center w-full bg-brand-green hover:bg-brand-hover text-white font-bold py-2 px-4 rounded-pill shadow-md transition-all duration-300 custom-focus-ring mb-4">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M2 6h2v12H2V6zm3 0h1v12H5V6zm2 0h2v12H7V6zm3 0h1v12h-1V6zm2 0h2v12h-2V6zm3 0h1v12h-1V6zm2 0h3v12h-3V6z"/>
                     </svg>
@@ -182,57 +201,57 @@
                     <img id="itemImage" src="" alt="Product Image" class="w-32 h-32 object-contain mx-auto rounded-lg mb-4">
                 </div>
                 <div class="mb-4">
-                    <label for="itemName" class="block text-sm font-medium mb-1">Item Name</label>
-                    <input type="text" id="itemName" required class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
+                    <label for="itemName" class="block text-sm font-medium text-text-muted dark:text-text-muted-dark mb-1">Item Name</label>
+                    <input type="text" id="itemName" required class="w-full p-2 rounded-xl bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-[#2A3F38] custom-focus-ring">
                 </div>
                 <div id="continuousQuantityInput" class="grid grid-cols-2 gap-4 mb-4">
                     <div>
-                        <label for="itemQuantityNumeric" class="block text-sm font-medium mb-1">Quantity</label>
-                        <input type="number" id="itemQuantityNumeric" required min="0" class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
+                        <label for="itemQuantityNumeric" class="block text-sm font-medium text-text-muted dark:text-text-muted-dark mb-1">Quantity</label>
+                        <input type="number" id="itemQuantityNumeric" required min="0" class="w-full p-2 rounded-xl bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-[#2A3F38] custom-focus-ring">
                     </div>
                     <div>
-                        <label for="itemUnit" class="block text-sm font-medium mb-1">Unit</label>
-                        <input type="text" id="itemUnit" class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
+                        <label for="itemUnit" class="block text-sm font-medium text-text-muted dark:text-text-muted-dark mb-1">Unit</label>
+                        <input type="text" id="itemUnit" class="w-full p-2 rounded-xl bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-[#2A3F38] custom-focus-ring">
                     </div>
                 </div>
                 <div id="discreteQuantityCounter" class="mb-4 hidden">
-                    <label for="discreteItemQuantity" class="block text-sm font-medium mb-1">Number of Items</label>
+                    <label for="discreteItemQuantity" class="block text-sm font-medium text-text-muted dark:text-text-muted-dark mb-1">Number of Items</label>
                     <div class="flex items-center space-x-2">
-                        <button type="button" id="decrementDiscreteQuantity" class="p-2 bg-gray-200 dark:bg-gray-700 rounded-md text-neutral-dark dark:text-neutral-light custom-focus-ring">-</button>
-                        <input type="number" id="discreteItemQuantity" min="0" value="1" class="w-20 p-2 text-center rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
-                        <button type="button" id="incrementDiscreteQuantity" class="p-2 bg-gray-200 dark:bg-gray-700 rounded-md text-neutral-dark dark:text-neutral-light custom-focus-ring">+</button>
+                        <button type="button" id="decrementDiscreteQuantity" class="p-2 bg-gray-200 dark:bg-[#1F2E28] rounded-md text-gray-700 dark:text-gray-300 custom-focus-ring">-</button>
+                        <input type="number" id="discreteItemQuantity" min="0" value="1" class="w-20 p-2 text-center rounded-xl bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-[#2A3F38] custom-focus-ring">
+                        <button type="button" id="incrementDiscreteQuantity" class="p-2 bg-gray-200 dark:bg-[#1F2E28] rounded-md text-gray-700 dark:text-gray-300 custom-focus-ring">+</button>
                     </div>
                 </div>
                 <div class="mb-4 flex items-center">
-                    <input type="checkbox" id="isDiscrete" class="mr-2 h-4 w-4 text-primary-dark focus:ring-primary-dark border-gray-300 rounded">
-                    <label for="isDiscrete" class="text-sm font-medium">Is Discrete Item (e.g., 6 bananas, not 1L milk)</label>
+                    <input type="checkbox" id="isDiscrete" class="mr-2 h-4 w-4 text-brand-green focus:ring-brand-green border-gray-300 rounded">
+                    <label for="isDiscrete" class="text-sm font-medium text-text-main dark:text-text-inv">Is Discrete Item (e.g., 6 bananas, not 1L milk)</label>
                 </div>
                 <div id="remainingQuantitySliderContainer" class="mb-4" style="display: none;">
-                    <label for="remainingRatio" class="block text-sm font-medium mb-1">Amount Remaining: <span id="remainingRatioValue">100%</span></label>
+                    <label for="remainingRatio" class="block text-sm font-medium text-text-muted dark:text-text-muted-dark mb-1">Amount Remaining: <span id="remainingRatioValue">100%</span></label>
                     <input type="range" id="remainingRatio" min="0" max="100" value="100" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700">
                 </div>
                 <div class="mb-4">
-                    <label for="itemLocation" class="block text-sm font-medium mb-1">Storage Location</label>
-                    <input type="text" id="itemLocation" placeholder="e.g., Pantry" required class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring" list="location-list">
+                    <label for="itemLocation" class="block text-sm font-medium text-text-muted dark:text-text-muted-dark mb-1">Storage Location</label>
+                    <input type="text" id="itemLocation" placeholder="e.g., Pantry" required class="w-full p-2 rounded-xl bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-[#2A3F38] custom-focus-ring" list="location-list">
                     <datalist id="location-list"></datalist>
                 </div>
                 <div class="mb-6">
-                    <label for="perishableDateInput" class="block text-sm font-medium mb-1">Perishable Date</label>
+                    <label for="perishableDateInput" class="block text-sm font-medium text-text-muted dark:text-text-muted-dark mb-1">Perishable Date</label>
                     <div class="flex items-center flex-wrap gap-2">
-                        <input type="date" id="perishableDateInput" required class="w-full p-2 rounded-md bg-white dark:bg-tertiary-dark border border-tertiary-light dark:border-tertiary-dark custom-focus-ring">
-                        <button type="button" id="quickAdd1Day" class="p-2 bg-blue-200 dark:bg-blue-800 rounded-md text-sm custom-focus-ring whitespace-nowrap">+1 Day</button>
-                        <button type="button" id="quickAdd7Days" class="p-2 bg-blue-200 dark:bg-blue-800 rounded-md text-sm custom-focus-ring whitespace-nowrap">+7 Days</button>
-                        <button type="button" id="quickAdd1Month" class="p-2 bg-blue-200 dark:bg-blue-800 rounded-md text-sm custom-focus-ring whitespace-nowrap">+1 Month</button>
-                        <button type="button" id="quickAdd1Year" class="p-2 bg-blue-200 dark:bg-blue-800 rounded-md text-sm custom-focus-ring whitespace-nowrap">+1 Year</button>
-                        <button type="button" id="resetPerishableDate" class="p-2 bg-gray-300 dark:bg-gray-600 rounded-md text-sm custom-focus-ring whitespace-nowrap">Reset</button>
+                        <input type="date" id="perishableDateInput" required class="w-full p-2 rounded-xl bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-[#2A3F38] custom-focus-ring">
+                        <button type="button" id="quickAdd1Day" class="p-2 bg-gray-200 dark:bg-[#1F2E28] rounded-pill text-sm custom-focus-ring whitespace-nowrap">+1 Day</button>
+                        <button type="button" id="quickAdd7Days" class="p-2 bg-gray-200 dark:bg-[#1F2E28] rounded-pill text-sm custom-focus-ring whitespace-nowrap">+7 Days</button>
+                        <button type="button" id="quickAdd1Month" class="p-2 bg-gray-200 dark:bg-[#1F2E28] rounded-pill text-sm custom-focus-ring whitespace-nowrap">+1 Month</button>
+                        <button type="button" id="quickAdd1Year" class="p-2 bg-gray-200 dark:bg-[#1F2E28] rounded-pill text-sm custom-focus-ring whitespace-nowrap">+1 Year</button>
+                        <button type="button" id="resetPerishableDate" class="p-2 bg-gray-300 dark:bg-gray-600 rounded-pill text-sm custom-focus-ring whitespace-nowrap">Reset</button>
                     </div>
                 </div>
                 <div class="flex justify-between space-x-4">
                     <div>
-                        <button type="button" id="deleteItemBtn" class="py-2 px-4 rounded-lg bg-error text-white font-bold hidden">Delete</button>
+                        <button type="button" id="deleteItemBtn" class="py-2 px-4 rounded-pill bg-danger text-white font-bold hidden">Delete</button>
                     </div>
                     <div class="flex space-x-4">
-                        <button type="submit" id="saveBtn" class="py-2 px-6 rounded-lg bg-primary-dark text-white font-bold">Save</button>
+                        <button type="submit" id="saveBtn" class="py-2 px-6 rounded-pill bg-brand-green hover:bg-brand-hover text-white font-bold">Save</button>
                     </div>
                 </div>
             </form>
@@ -241,14 +260,14 @@
 
     <!-- Interaction Modal -->
     <div id="interactionModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-primary-light dark:bg-secondary-dark rounded-lg shadow-xl w-full max-w-md p-6 modal-enter">
-            <h2 id="interactionModalTitle" class="text-2xl font-bold mb-4 text-primary-dark dark:text-primary-light">Found Matching Items</h2>
+        <div class="bg-surface-light dark:bg-surface-dark rounded-card shadow-xl w-full max-w-md p-6 modal-enter">
+            <h2 id="interactionModalTitle" class="text-2xl font-bold mb-4 text-text-main dark:text-text-inv">Found Matching Items</h2>
             <div id="interactionList" class="space-y-3 mb-6 max-h-60 overflow-y-auto">
                 <!-- Matching items will be injected here -->
             </div>
             <div class="flex justify-between">
-                <button type="button" id="interactionAddNewBtn" class="py-2 px-4 rounded-lg bg-green-600 text-white font-bold">Add as New</button>
-                <button type="button" id="interactionCancelBtn" class="py-2 px-4 rounded-lg bg-neutral-light dark:bg-neutral-dark">Cancel</button>
+                <button type="button" id="interactionAddNewBtn" class="py-2 px-4 rounded-pill bg-brand-green text-white font-bold">Add as New</button>
+                <button type="button" id="interactionCancelBtn" class="py-2 px-4 rounded-pill bg-gray-200 dark:bg-[#1F2E28] text-gray-700 dark:text-gray-300">Cancel</button>
             </div>
         </div>
     </div>
@@ -257,12 +276,12 @@
 
     <!-- Confirmation Modal -->
     <div id="confirmModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-primary-light dark:bg-secondary-dark rounded-lg shadow-xl w-full max-w-sm p-6 modal-enter">
-            <h2 id="confirmModalTitle" class="text-xl font-bold mb-4 text-primary-dark dark:text-primary-light">Confirm Deletion</h2>
-            <p class="mb-6">Are you sure you want to delete this item? This action cannot be undone.</p>
+        <div class="bg-surface-light dark:bg-surface-dark rounded-card shadow-xl w-full max-w-sm p-6 modal-enter">
+            <h2 id="confirmModalTitle" class="text-xl font-bold mb-4 text-text-main dark:text-text-inv">Confirm Deletion</h2>
+            <p class="mb-6 text-text-muted dark:text-text-muted-dark">Are you sure you want to delete this item? This action cannot be undone.</p>
             <div class="flex justify-end space-x-4">
-                <button id="confirmCancelBtn" class="py-2 px-4 rounded-lg bg-neutral-light dark:bg-neutral-dark">Cancel</button>
-                <button id="confirmDeleteBtn" class="py-2 px-4 rounded-lg bg-error text-white font-bold">Delete</button>
+                <button id="confirmCancelBtn" class="py-2 px-4 rounded-pill bg-gray-200 dark:bg-[#1F2E28] text-gray-700 dark:text-gray-300">Cancel</button>
+                <button id="confirmDeleteBtn" class="py-2 px-4 rounded-pill bg-danger text-white font-bold">Delete</button>
             </div>
         </div>
     </div>
@@ -271,35 +290,35 @@
 
     <!-- Barcode Scan Modal -->
     <div id="barcodeScanModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
-        <div class="bg-primary-light dark:bg-secondary-dark rounded-lg shadow-xl w-full max-w-2xl p-6 modal-enter space-y-4">
-            <h2 class="text-2xl font-bold text-primary-dark dark:text-primary-light">Scan Barcode</h2>
+        <div class="bg-surface-light dark:bg-surface-dark rounded-card shadow-xl w-full max-w-2xl p-6 modal-enter space-y-4">
+            <h2 class="text-2xl font-bold text-text-main dark:text-text-inv">Scan Barcode</h2>
             <div class="bg-gray-900 rounded-lg flex justify-center items-center relative overflow-hidden">
                 <video id="barcodeVideo" class="w-full"></video>
                 <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div class="w-3/4 h-1/2 border-2 border-green-500 rounded-lg opacity-75"></div>
+                    <div class="w-3/4 h-1/2 border-2 border-brand-green rounded-lg opacity-75"></div>
                 </div>
             </div>
-            <div id="barcode-status-container" class="p-4 rounded-lg text-center bg-white dark:bg-tertiary-dark">
+            <div id="barcode-status-container" class="p-4 rounded-lg text-center bg-gray-100 dark:bg-gray-800">
                 <p id="barcodeStatus" class="font-medium">Searching for barcode...</p>
             </div>
             <div class="flex justify-center space-x-4">
-                <button type="button" id="toggleFlashlightBtn" class="py-2 px-4 rounded-lg bg-gray-500 text-white font-bold hidden">
+                <button type="button" id="toggleFlashlightBtn" class="py-2 px-4 rounded-pill bg-gray-500 text-white font-bold hidden">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M11.316 1.018a.75.75 0 01.784.068l5.5 4.5A.75.75 0 0118 6.75v6.5a.75.75 0 01-.394.655l-5.5 3.5A.75.75 0 0112 17.25v-3.072l-1.47 1.47a.75.75 0 01-1.06-1.06l2.75-2.75a.75.75 0 011.06 0l2.75 2.75a.75.75 0 01-1.06 1.06l-1.47-1.47V17.25a.75.75 0 01-.394-.655l-5.5-3.5A.75.75 0 012 13.25v-6.5a.75.75 0 01.394-.655l5.5-4.5a.75.75 0 01.784-.068zM12 12.928V6.75H6.75v6.178l5.25 3.357V12.928z" clip-rule="evenodd" />
                     </svg>
                     Flashlight
                 </button>
-                <button type="button" id="cancelBarcodeScanBtn" class="py-2 px-4 rounded-lg bg-neutral-light dark:bg-neutral-dark">Cancel</button>
+                <button type="button" id="cancelBarcodeScanBtn" class="py-2 px-4 rounded-pill bg-gray-200 dark:bg-[#1F2E28] text-gray-700 dark:text-gray-300">Cancel</button>
             </div>
         </div>
     </div> <!-- Closing div for id="app" -->
 
     <!-- Floating Action Buttons -->
     <div class="fixed bottom-4 right-4 flex flex-col space-y-3 z-40">
-        <button id="deleteSelectedBtn" class="flex items-center bg-error hover:bg-red-700 text-white font-bold py-3 px-5 rounded-full shadow-lg transition-all duration-300 custom-focus-ring hidden">
+        <button id="deleteSelectedBtn" class="flex items-center bg-danger hover:bg-red-700 text-white font-bold py-3 px-5 rounded-pill shadow-lg transition-all duration-300 custom-focus-ring hidden">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
         </button>
-        <button id="addItemBtn" class="flex items-center bg-primary-dark hover:bg-tertiary-dark text-white font-bold py-3 px-5 rounded-full shadow-lg transition-all duration-300 custom-focus-ring">
+        <button id="addItemBtn" class="flex items-center bg-brand-green hover:bg-brand-hover text-white font-bold py-3 px-5 rounded-pill shadow-lg transition-all duration-300 custom-focus-ring">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
         </button>
     </div>
