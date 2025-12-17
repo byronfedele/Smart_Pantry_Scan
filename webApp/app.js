@@ -26,6 +26,7 @@ export const inventoryApp = {
 
     initDOMElements() {
         this.themeToggle = document.getElementById('theme-toggle');
+        this.donateBtn = document.getElementById('donateBtn');
         this.addItemBtn = document.getElementById('addItemBtn');
         this.scanBarcodeInFormBtn = document.getElementById('scanBarcodeInFormBtn');
         this.itemModal = document.getElementById('itemModal');
@@ -82,6 +83,7 @@ export const inventoryApp = {
 
     addEventListeners() {
         this.themeToggle.addEventListener('click', () => this.toggleTheme());
+        this.donateBtn.addEventListener('click', () => window.open('https://ko-fi.com/kofisupporter49538', '_blank'));
         this.addItemBtn.addEventListener('click', () => this.openItemForm());
         this.scanBarcodeInFormBtn.addEventListener('click', () => window.barcodeScannerApp.startScan());
         this.closeItemModalBtn.addEventListener('click', () => this.closeModal(this.itemModal));
