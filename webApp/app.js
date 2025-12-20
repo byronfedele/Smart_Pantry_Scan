@@ -100,59 +100,29 @@ export const inventoryApp = {
         this.tableBody.addEventListener('click', (e) => this.handleTableActions(e));
         this.inventoryCardsContainer.addEventListener('click', (e) => this.handleCardActions(e));
 
-        let pressTimer;
-        const longPressDuration = 700;
+                this.inventoryCardList.addEventListener('contextmenu', (e) => {
 
-        this.inventoryCardList.addEventListener('touchstart', (e) => {
-            const card = e.target.closest('.bg-primary-light.dark\\:bg-tertiary-dark.rounded-lg.shadow-md.p-4.relative.cursor-pointer');
-            if (card) {
-                pressTimer = setTimeout(() => {
-                    const itemId = parseInt(card.dataset.id, 10);
-                    if (this.selectedItems.includes(itemId)) {
-                        this.showClearSelectionOptions(itemId);
-                    } else {
-                        this.showSelectAllConfirmation();
+                    const card = e.target.closest('.bg-primary-light.dark\\:bg-tertiary-dark.rounded-lg.shadow-md.p-4.relative.cursor-pointer');
+
+                    if (card) {
+
+                        e.preventDefault();
+
+                        const itemId = parseInt(card.dataset.id, 10);
+
+                        if (this.selectedItems.includes(itemId)) {
+
+                            this.showClearSelectionOptions(itemId);
+
+                        } else {
+
+                            this.showSelectAllConfirmation();
+
+                        }
+
                     }
-                    pressTimer = null;
-                }, longPressDuration);
-            }
-        });
 
-        this.inventoryCardList.addEventListener('touchend', (e) => {
-            clearTimeout(pressTimer);
-            if (pressTimer === null) {
-                e.preventDefault();
-            }
-        });
-
-        this.inventoryCardList.addEventListener('mousedown', (e) => {
-            const card = e.target.closest('.bg-primary-light.dark\\:bg-tertiary-dark.rounded-lg.shadow-md.p-4.relative.cursor-pointer');
-            if (card) {
-                pressTimer = setTimeout(() => {
-                    const itemId = parseInt(card.dataset.id, 10);
-                    if (this.selectedItems.includes(itemId)) {
-                        this.showClearSelectionOptions(itemId);
-                    } else {
-                        this.showSelectAllConfirmation();
-                    }
-                    pressTimer = null;
-                }, longPressDuration);
-            }
-        });
-
-        this.inventoryCardList.addEventListener('mouseup', (e) => {
-            clearTimeout(pressTimer);
-            if (pressTimer === null) {
-                e.preventDefault();
-            }
-        });
-
-        this.inventoryCardList.addEventListener('contextmenu', (e) => {
-            const card = e.target.closest('.bg-primary-light.dark\\:bg-tertiary-dark.rounded-lg.shadow-md.p-4.relative.cursor-pointer');
-            if (card && pressTimer === null) {
-                e.preventDefault();
-            }
-        });
+                });
 
         this.paginationContainer.addEventListener('click', (e) => this.handlePaginationClick(e));
         document.querySelector('thead').addEventListener('click', (e) => this.handleSort(e));
