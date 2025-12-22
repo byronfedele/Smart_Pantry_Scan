@@ -66,12 +66,12 @@ describe('Smart Pantry Scan', () => {
         vi.useRealTimers();
     });
 
-    it('should have a title', () => {
-        inventoryApp.init(); // Initialize inventoryApp for this test
-        const title = document.querySelector('h1');
-        expect(title.textContent).toBe('Smart Pantry Scan');
-    });
-
+            it('should have a logo', () => {
+                inventoryApp.init(); // Initialize inventoryApp for this test
+                const logo = document.querySelector('header img');
+                expect(logo).not.toBeNull();
+                expect(logo.alt).toBe('InHand Logo');
+            });
     describe('Inventory Management (CRUD)', () => {
         beforeEach(() => {
             inventoryApp.init();
