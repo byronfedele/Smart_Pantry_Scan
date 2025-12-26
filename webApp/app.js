@@ -16,6 +16,8 @@ export const inventoryApp = {
     init() {
         this.initDOMElements();
         this.loadTheme();
+        // Re-check theme after a short delay to catch system theme in mobile webviews
+        setTimeout(() => this.loadTheme(), 50);
         this.loadInventory();
         this.addEventListeners();
         this.render();
@@ -130,10 +132,12 @@ export const inventoryApp = {
                 this.continuousQuantityInput.classList.add('hidden');
                 this.discreteQuantityCounter.classList.remove('hidden');
                 this.remainingQuantitySliderContainer.style.display = 'none';
+                this.itemQuantityNumeric.required = false;
             } else {
                 this.continuousQuantityInput.classList.remove('hidden');
                 this.discreteQuantityCounter.classList.add('hidden');
                 this.remainingQuantitySliderContainer.style.display = 'block';
+                this.itemQuantityNumeric.required = true;
             }
         });
         this.remainingRatio.addEventListener('input', () => {
@@ -153,6 +157,14 @@ export const inventoryApp = {
         this.quickAdd1Month.addEventListener('click', () => this.handleQuickAdd(1, 'months'));
         this.quickAdd1Year.addEventListener('click', () => this.handleQuickAdd(1, 'years'));
         this.resetPerishableDate.addEventListener('click', () => this.handleResetPerishableDate());
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            // Only apply system theme if user has NOT made a manual selection
+            if (!localStorage.getItem('theme')) {
+                const isDark = e.matches;
+                document.documentElement.classList.toggle('dark', isDark);
+                this.updateThemeIcons(isDark);
+            }
+        });
     },
 
     clearAllFilters() {
@@ -169,16 +181,25 @@ export const inventoryApp = {
     },
 
     loadTheme() {
-        const isDark = localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        const userPreference = localStorage.getItem('theme');
+        const systemPreference = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        const isDark = userPreference ? userPreference === 'dark' : systemPreference === 'dark';
+        
         document.documentElement.classList.toggle('dark', isDark);
-        document.getElementById('theme-icon-light').classList.toggle('hidden', isDark);
-        document.getElementById('theme-icon-dark').classList.toggle('hidden', !isDark);
+        // Show sun in dark mode, moon in light mode
+        document.getElementById('theme-icon-light').classList.toggle('hidden', !isDark);
+        document.getElementById('theme-icon-dark').classList.toggle('hidden', isDark);
     },
 
     toggleTheme() {
         const isDark = document.documentElement.classList.toggle('dark');
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
-        this.loadTheme();
+        this.updateThemeIcons(isDark);
+    },
+
+    updateThemeIcons(isDark) {
+        document.getElementById('theme-icon-light').classList.toggle('hidden', !isDark);
+        document.getElementById('theme-icon-dark').classList.toggle('hidden', isDark);
     },
 
     loadInventory() {
