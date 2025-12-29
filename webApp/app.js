@@ -470,11 +470,14 @@ export const inventoryApp = {
             const daysRemaining = item.perishableDate ? Math.floor((new Date(item.perishableDate) - new Date()) / (1000 * 60 * 60 * 24)) : null;
             const isSpoiled = daysRemaining !== null && daysRemaining < 0;
             const isExpiringSoon = this.showExpiringSoon && daysRemaining !== null && daysRemaining >= 0 && daysRemaining <= this.expiringDays;
+            
+            const showSelectedFilter = !this.showSelectedItems || this.selectedItems.includes(item.id);
+
             return item.name.toLowerCase().includes(searchTerm) &&
                 (this.selectedLocationFilters.length === 0 || this.selectedLocationFilters.includes(item.location)) &&
                 (!this.showSpoiled || isSpoiled) &&
                 (!this.showExpiringSoon || isExpiringSoon) &&
-                (!this.showSelectedItems || this.selectedItems.includes(item.id));
+                showSelectedFilter;
         });
 
         this.filteredInventory.sort((a, b) => {
@@ -601,6 +604,7 @@ export const inventoryApp = {
             this.selectedItems = this.selectedItems.filter(id => id !== itemId);
         }
         this.updateDeleteButtonState();
+        this.render(); // Ensure UI updates immediately after selection changes
     },
 
     updateDeleteButtonState() {
