@@ -9,6 +9,7 @@ export const inventoryApp = {
     itemToDeleteId: null,
     selectedItems: [],
     selectedLocationFilters: [],
+    showSelectedItems: false,
     showSpoiled: false,
     showExpiringSoon: false,
     expiringDays: 3,
@@ -78,6 +79,7 @@ export const inventoryApp = {
         this.clearAllFiltersBtn = document.getElementById('clearAllFiltersBtn');
         this.deleteItemBtn = document.getElementById('deleteItemBtn');
         this.showSpoiledCheckbox = document.getElementById('showSpoiled');
+        this.showSelectedCheckbox = document.getElementById('showSelected');
         this.showExpiringSoonCheckbox = document.getElementById('showExpiringSoon');
         this.expiringDaysInput = document.getElementById('expiringDays');
         this.mobileSort = document.getElementById('mobileSort');
@@ -122,6 +124,7 @@ export const inventoryApp = {
         this.clearAllFiltersBtn.addEventListener('click', () => this.clearAllFilters());
         this.deleteItemBtn.addEventListener('click', () => this.openConfirmModal(document.getElementById('itemId').value));
         this.showSpoiledCheckbox.addEventListener('change', (e) => this.handleFilterChange(e));
+        this.showSelectedCheckbox.addEventListener('change', (e) => this.handleFilterChange(e));
         this.showExpiringSoonCheckbox.addEventListener('change', (e) => this.handleFilterChange(e));
         this.expiringDaysInput.addEventListener('input', (e) => this.handleFilterChange(e));
         this.mobileSort.addEventListener('change', (e) => this.handleMobileSort(e));
@@ -171,9 +174,11 @@ export const inventoryApp = {
         document.getElementById('search').value = '';
         this.selectedLocationFilters = [];
         this.showSpoiled = false;
+        this.showSelectedItems = false;
         this.showExpiringSoon = false;
         this.expiringDays = 3;
         document.getElementById('showSpoiled').checked = false;
+        document.getElementById('showSelected').checked = false;
         document.getElementById('showExpiringSoon').checked = false;
         document.getElementById('expiringDays').value = 3;
         this.currentPage = 1;
@@ -429,6 +434,8 @@ export const inventoryApp = {
             }
         } else if (target.matches('#showSpoiled')) {
             this.showSpoiled = target.checked;
+        } else if (target.matches('#showSelected')) {
+            this.showSelectedItems = target.checked;
         } else if (target.matches('#showExpiringSoon')) {
             this.showExpiringSoon = target.checked;
         } else if (target.matches('#expiringDays')) {
@@ -466,7 +473,8 @@ export const inventoryApp = {
             return item.name.toLowerCase().includes(searchTerm) &&
                 (this.selectedLocationFilters.length === 0 || this.selectedLocationFilters.includes(item.location)) &&
                 (!this.showSpoiled || isSpoiled) &&
-                (!this.showExpiringSoon || isExpiringSoon);
+                (!this.showExpiringSoon || isExpiringSoon) &&
+                (!this.showSelectedItems || this.selectedItems.includes(item.id));
         });
 
         this.filteredInventory.sort((a, b) => {

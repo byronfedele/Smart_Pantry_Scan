@@ -26,6 +26,8 @@ describe('Smart Pantry Scan', () => {
         })();
         Object.defineProperty(window, 'localStorage', { value: localStorageMock, writable: true });
         global.localStorage = window.localStorage;
+        global.alert = vi.fn();
+        global.Event = dom.window.Event;
 
         global.fetch = vi.fn();
 
@@ -192,6 +194,61 @@ describe('Smart Pantry Scan', () => {
             inventoryApp.render();
             expect(inventoryApp.filteredInventory[0].name).toBe('Bread');
         });
+
+        it('filters by selected items', () => {
+            // This test is more of a unit test to ensure the filtering logic is correct
+            // without relying on the full render cycle which has been flaky in JSDOM.
+            inventoryApp.inventory = [
+                { id: 1, name: 'Milk', location: 'Refrigerator', perishableDate: '2025-10-26T10:00:00Z' },
+                { id: 2, name: 'Bananas', location: 'Counter', perishableDate: '2025-10-24T11:30:00Z' },
+            ];
+            inventoryApp.selectedItems = [1];
+            inventoryApp.showSelectedItems = true;
+
+            // Reset other filters to default
+            document.getElementById('search').value = '';
+            inventoryApp.selectedLocationFilters = [];
+            inventoryApp.showSpoiled = false;
+            inventoryApp.showExpiringSoon = false;
+
+            inventoryApp.applyFiltersAndSort();
+
+            expect(inventoryApp.filteredInventory.length).toBe(1);
+            expect(inventoryApp.filteredInventory[0].id).toBe(1);
+        });
+
+        it('additively filters by selected items and another filter', () => {
+            inventoryApp.inventory = [
+                { id: 1, name: 'Milk', location: 'Refrigerator', perishableDate: '2025-10-26T10:00:00Z' },
+                { id: 2, name: 'Eggs', location: 'Refrigerator', perishableDate: '2025-10-24T11:30:00Z' },
+                { id: 3, name: 'Bread', location: 'Pantry', perishableDate: '2025-10-24T11:30:00Z' },
+            ];
+            inventoryApp.selectedItems = [1, 3];
+            inventoryApp.showSelectedItems = true;
+            inventoryApp.selectedLocationFilters = ['Refrigerator'];
+
+            inventoryApp.applyFiltersAndSort();
+
+            expect(inventoryApp.filteredInventory.length).toBe(1);
+            expect(inventoryApp.filteredInventory[0].id).toBe(1);
+        });
+
+        it('removes the selected items filter when unchecked', () => {
+            inventoryApp.inventory = [
+                { id: 1, name: 'Milk', location: 'Refrigerator', perishableDate: '2025-10-26T10:00:00Z' },
+                { id: 2, name: 'Eggs', location: 'Refrigerator', perishableDate: '2025-10-24T11:30:00Z' },
+            ];
+            inventoryApp.selectedItems = [1];
+            inventoryApp.selectedLocationFilters = ['Refrigerator'];
+            inventoryApp.showSelectedItems = true;
+
+            inventoryApp.applyFiltersAndSort();
+            expect(inventoryApp.filteredInventory.length).toBe(1);
+
+            inventoryApp.showSelectedItems = false;
+            inventoryApp.applyFiltersAndSort();
+            expect(inventoryApp.filteredInventory.length).toBe(2);
+        });
     });
 
     describe('Barcode Scanning', () => {
@@ -201,7 +258,7 @@ describe('Smart Pantry Scan', () => {
                 { id: 1, name: 'Milk', quantity: 1, unit: 'Liter', isDiscrete: false, remainingRatio: 0.75, location: 'Refrigerator', dateAdded: '2025-11-20T10:00:00Z', perishableDate: '2026-02-26T10:00:00Z', imageSmallUrl: '', url: '' },
                 { id: 2, name: 'Bananas', quantity: 6, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Counter', dateAdded: '2025-11-25T11:30:00Z', perishableDate: '2026-02-24T11:30:00Z', imageSmallUrl: '', url: '' },
                 { id: 3, name: 'Canned Tomatoes', quantity: 2, unit: 'cans', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-11-15T14:00:00Z', perishableDate: '2026-03-25T14:00:00Z', imageSmallUrl: '', url: '' },
-                { id: 4, name: 'Eggs', quantity: 12, unit: 'units', isDiscrete: true, r1emainingRatio: 1, location: 'Refrigerator', dateAdded: '2025-11-10T09:00:00Z', perishableDate: '2026-02-11T09:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 4, name: 'Eggs', quantity: 12, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Refrigerator', dateAdded: '2025-11-10T09:00:00Z', perishableDate: '2026-02-11T09:00:00Z', imageSmallUrl: '', url: '' },
                 { id: 5, name: 'Bread', quantity: 1, unit: 'loaf', isDiscrete: false, remainingRatio: 0.5, location: 'Pantry', dateAdded: '2025-11-28T16:00:00Z', perishableDate: '2026-02-07T16:00:00Z', imageSmallUrl: '', url: '' },
                 { id: 6, name: 'Yogurt', quantity: 4, unit: 'cups', isDiscrete: true, remainingRatio: 1, location: 'Refrigerator', dateAdded: '2025-11-18T08:00:00Z', perishableDate: '2026-02-11T08:00:00Z', imageSmallUrl: '', url: '' },
                 { id: 7, name: 'Coffee Beans', quantity: 500, unit: 'grams', isDiscrete: false, remainingRatio: 0.8, location: 'Pantry', dateAdded: '2025-11-17T13:00:00Z', perishableDate: '2026-03-25T13:00:00Z', imageSmallUrl: '', url: '' },
