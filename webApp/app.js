@@ -32,6 +32,7 @@ export const inventoryApp = {
         this.donateBtn = document.getElementById('donateBtn');
         this.addItemBtn = document.getElementById('addItemBtn');
         this.scanBarcodeInFormBtn = document.getElementById('scanBarcodeInFormBtn');
+        this.scanBarcodeBtn = document.getElementById('scanBarcodeBtn');
         this.itemModal = document.getElementById('itemModal');
         this.closeItemModalBtn = document.getElementById('closeItemModalBtn');
         this.cancelBarcodeScanBtn = document.getElementById('cancelBarcodeScanBtn');
@@ -54,7 +55,7 @@ export const inventoryApp = {
         this.inventoryCardsContainer = document.getElementById('inventory-cards');
         this.inventoryCardList = document.getElementById('inventory-card-list');
         this.paginationContainer = document.getElementById('pagination');
-        this.filterInputs = document.querySelectorAll('#filters input, #filters select');
+        this.filterInputs = document.querySelectorAll('#filters input, #filters select, #search');
         this.locationFiltersContainer = document.getElementById('locationFilters');
         this.locationDatalist = document.getElementById('location-list');
         this.noResultsDiv = document.getElementById('no-results');
@@ -82,7 +83,7 @@ export const inventoryApp = {
         this.showSelectedCheckbox = document.getElementById('showSelected');
         this.showExpiringSoonCheckbox = document.getElementById('showExpiringSoon');
         this.expiringDaysInput = document.getElementById('expiringDays');
-        this.mobileSort = document.getElementById('mobileSort');
+        this.sortBy = document.getElementById('sortBy');
     },
 
     addEventListeners() {
@@ -90,6 +91,7 @@ export const inventoryApp = {
         this.donateBtn.addEventListener('click', () => window.open('https://ko-fi.com/kofisupporter49538', '_blank'));
         this.addItemBtn.addEventListener('click', () => this.openItemForm());
         this.scanBarcodeInFormBtn.addEventListener('click', () => window.barcodeScannerApp.startScan());
+        this.scanBarcodeBtn.addEventListener('click', () => window.barcodeScannerApp.startScan());
         this.closeItemModalBtn.addEventListener('click', () => this.closeModal(this.itemModal));
         this.cancelBarcodeScanBtn.addEventListener('click', () => window.barcodeScannerApp.stopScan());
         this.toggleFlashlightBtn.addEventListener('click', () => window.barcodeScannerApp.toggleFlashlight());
@@ -127,7 +129,7 @@ export const inventoryApp = {
         this.showSelectedCheckbox.addEventListener('change', (e) => this.handleFilterChange(e));
         this.showExpiringSoonCheckbox.addEventListener('change', (e) => this.handleFilterChange(e));
         this.expiringDaysInput.addEventListener('input', (e) => this.handleFilterChange(e));
-        this.mobileSort.addEventListener('change', (e) => this.handleMobileSort(e));
+        this.sortBy.addEventListener('change', (e) => this.handleSortChange(e));
         window.addEventListener('resize', () => this.render());
 
         this.isDiscrete.addEventListener('change', () => {
@@ -177,10 +179,13 @@ export const inventoryApp = {
         this.showSelectedItems = false;
         this.showExpiringSoon = false;
         this.expiringDays = 3;
-        document.getElementById('showSpoiled').checked = false;
-        document.getElementById('showSelected').checked = false;
-        document.getElementById('showExpiringSoon').checked = false;
+        // Reset all checkboxex and inputs in the filter section
+        document.querySelectorAll('#filters input[type="checkbox"]').forEach(checkbox => checkbox.checked = false);
+        document.querySelectorAll('#locationFilters input[type="checkbox"]').forEach(checkbox => checkbox.checked = false);
         document.getElementById('expiringDays').value = 3;
+        // Reset sort dropdown to default
+        this.sortBy.value = 'spoilage_asc';
+        this.handleSortChange({ target: this.sortBy }); // Apply sort change
         this.currentPage = 1;
         this.render();
     },
@@ -440,12 +445,14 @@ export const inventoryApp = {
             this.showExpiringSoon = target.checked;
         } else if (target.matches('#expiringDays')) {
             this.expiringDays = parseInt(target.value, 10);
+        } else if (target.matches('#sortBy')) {
+            this.handleSortChange(e);
         }
         this.currentPage = 1;
         this.render();
     },
 
-    handleMobileSort(e) {
+    handleSortChange(e) {
         const [key, direction] = e.target.value.split('_');
         this.sortConfig = { key, direction };
         this.currentPage = 1;
@@ -491,6 +498,9 @@ export const inventoryApp = {
             } else {
                 aVal = a[this.sortConfig.key];
                 bVal = b[this.sortConfig.key];
+            }
+            if (typeof aVal === 'string' && typeof bVal === 'string') {
+                return this.sortConfig.direction === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
             }
             if (aVal > bVal) return this.sortConfig.direction === 'asc' ? 1 : -1;
             if (aVal < bVal) return this.sortConfig.direction === 'asc' ? -1 : 1;

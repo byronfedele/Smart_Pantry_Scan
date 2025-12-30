@@ -68,6 +68,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/webp" href="icons/icon-48.webp">
 </head>
@@ -93,59 +94,73 @@
                 </div>
             </header>
 
-            <!-- Filters -->
-            <div class="bg-surface-light dark:bg-surface-dark p-4 rounded-card shadow-sm mb-6">
-                <details>
-                    <summary class="font-semibold text-lg cursor-pointer text-text-main dark:text-text-inv flex justify-between items-center">
-                        <span>Organize & Filter</span>
-                        <svg class="w-6 h-6 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                    </summary>
-                    <div id="filters" class="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div>
-                            <label for="search" class="block text-sm font-medium text-text-muted dark:text-text-muted-dark mb-1">Search by Name</label>
-                            <input type="text" id="search" placeholder="e.g., Milk" class="w-full p-2 rounded-xl bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-[#2A3F38] custom-focus-ring dark:placeholder-gray-500">
-                        </div>
+            <!-- Search -->
+            <div class="relative mb-6">
+                <input type="text" id="search" placeholder="Search by name..." class="block w-full p-3.5 pl-11 pr-12 text-base rounded-xl border border-gray-200 dark:border-[#2A3F38] bg-surface-light dark:bg-surface-dark placeholder:text-text-muted dark:placeholder-text-muted-dark custom-focus-ring outline-none transition-all shadow-sm" />
+                <div class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-text-muted dark:text-text-muted-dark pointer-events-none">
+                    <span class="material-symbols-outlined">search</span>
+                </div>
+                <button id="scanBarcodeBtn" class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-text-muted dark:text-text-muted-dark hover:text-brand-green transition-colors">
+                    <span class="material-symbols-outlined text-[24px]">qr_code_scanner</span>
+                </button>
+            </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-text-muted dark:text-text-muted-dark mb-1">Storage Location</label>
-                            <div id="locationFilters" class="max-h-24 overflow-y-auto space-y-1 p-2 bg-surface-light dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-[#2A3F38]">
+            <!-- Filters -->
+            <div class="bg-surface-light dark:bg-surface-dark rounded-card shadow-sm mb-6 border border-gray-200 dark:border-[#2A3F38] overflow-hidden">
+                <details class="group" open="">
+                    <summary class="flex items-center justify-between p-4 cursor-pointer list-none select-none hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-brand-green">tune</span>
+                            <h2 class="text-base font-bold text-text-main dark:text-text-inv">Organize & Filter</h2>
+                        </div>
+                        <span class="material-symbols-outlined transition-transform duration-300 group-open:rotate-180 text-text-muted dark:text-text-muted-dark">expand_more</span>
+                    </summary>
+                    <div id="filters" class="px-5 pb-6 border-t border-gray-200 dark:border-[#2A3F38] pt-5">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <!-- Sort By -->
+                            <div>
+                                <label for="sortBy" class="block text-sm font-medium text-text-muted dark:text-text-muted-dark mb-2">Sort by</label>
+                                <select id="sortBy" class="w-full p-2.5 rounded-xl bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-[#2A3F38] custom-focus-ring">
+                                    <option value="spoilage_asc" selected>Spoilage in (Soonest)</option>
+                                    <option value="spoilage_desc">Spoilage in (Latest)</option>
+                                    <option value="dateAdded_desc">Date Added (Newest)</option>
+                                    <option value="dateAdded_asc">Date Added (Oldest)</option>
+                                    <option value="amountRemaining_asc">Amount Remaining (Least)</option>
+                                    <option value="amountRemaining_desc">Amount Remaining (Most)</option>
+                                    <option value="name_asc">Name (A-Z)</option>
+                                    <option value="name_desc">Name (Z-A)</option>
+                                </select>
+                            </div>
+                            <!-- Location -->
+                            <div>
+                                <label class="block text-sm font-medium text-text-muted dark:text-text-muted-dark mb-2">Storage Location</label>
+                                <div id="locationFilters" class="max-h-32 overflow-y-auto space-y-2 p-2.5 bg-surface-light dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-[#2A3F38]">
+                                    <!-- Location filters will be dynamically populated -->
+                                </div>
+                            </div>
+                            <!-- Toggles -->
+                            <div class="space-y-4">
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="showSelected" class="h-4 w-4 text-brand-green focus:ring-brand-green border-gray-300 rounded">
+                                    <label for="showSelected" class="ml-3 block text-sm font-medium text-text-main dark:text-text-inv">Show selected only</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="showSpoiled" class="h-4 w-4 text-brand-green focus:ring-brand-green border-gray-300 rounded">
+                                    <label for="showSpoiled" class="ml-3 block text-sm font-medium text-text-main dark:text-text-inv">Show spoiled items</label>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="showExpiringSoon" class="h-4 w-4 text-brand-green focus:ring-brand-green border-gray-300 rounded">
+                                    <label for="showExpiringSoon" class="ml-3 block text-sm font-medium text-text-main dark:text-text-inv">Expiring in</label>
+                                    <input type="number" id="expiringDays" value="3" min="1" class="ml-2 w-16 p-1 rounded-md bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-[#2A3F38] custom-focus-ring text-center">
+                                    <span class="ml-2 text-sm text-text-main dark:text-text-inv">days</span>
+                                </div>
                             </div>
                         </div>
-
-                        <div class="flex items-center">
-                            <input type="checkbox" id="showSelected" class="mr-2 h-4 w-4 text-brand-green focus:ring-brand-green border-gray-300 rounded">
-                            <label for="showSelected" class="text-sm font-medium text-text-main dark:text-text-inv">Show selected</label>
+                        <div class="mt-6 flex justify-end">
+                            <button id="clearAllFiltersBtn" class="bg-danger hover:bg-red-700 text-white font-bold py-2 px-4 rounded-pill shadow-md transition-all duration-300 custom-focus-ring">
+                                Clear Filters
+                            </button>
                         </div>
-
-                        <div class="flex items-center">
-                            <input type="checkbox" id="showSpoiled" class="mr-2 h-4 w-4 text-brand-green focus:ring-brand-green border-gray-300 rounded">
-                            <label for="showSpoiled" class="text-sm font-medium text-text-main dark:text-text-inv">Show Spoiled</label>
-                        </div>
-
-                        <div class="flex items-center">
-                            <input type="checkbox" id="showExpiringSoon" class="mr-2 h-4 w-4 text-brand-green focus:ring-brand-green border-gray-300 rounded">
-                            <label for="showExpiringSoon" class="text-sm font-medium text-text-main dark:text-text-inv">Expiring in</label>
-                            <input type="number" id="expiringDays" value="3" min="1" class="ml-2 w-16 p-1 rounded-xl bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-[#2A3F38] custom-focus-ring text-center">
-                            <span class="ml-1 text-sm font-medium text-text-main dark:text-text-inv">days</span>
-                        </div>
-                        <div class="md:hidden">
-                            <label for="mobileSort" class="block text-sm font-medium text-text-muted dark:text-text-muted-dark mb-1">Sort by</label>
-                            <select id="mobileSort" class="w-full p-2 rounded-xl bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-[#2A3F38] custom-focus-ring">
-                                <option value="dateAdded_desc">Date Added (Newest)</option>
-                                <option value="dateAdded_asc">Date Added (Oldest)</option>
-                                <option value="spoilage_asc" selected>Spoilage in (Soonest)</option>
-                                <option value="spoilage_desc">Spoilage in (Latest)</option>
-                                <option value="amountRemaining_asc">Amount Remaining (Least)</option>
-                                <option value="amountRemaining_desc">Amount Remaining (Most)</option>
-                                <option value="name_asc">Name (A-Z)</option>
-                                <option value="name_desc">Name (Z-A)</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="mt-4 flex justify-end">
-                        <button id="clearAllFiltersBtn" class="bg-danger hover:bg-red-700 text-white font-bold py-2 px-4 rounded-pill shadow-md transition-all duration-300 custom-focus-ring">
-                            Clear Filters
-                        </button>
                     </div>
                 </details>
             </div>
