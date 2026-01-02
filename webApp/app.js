@@ -120,7 +120,6 @@ export const inventoryApp = {
         });
 
         this.paginationContainer.addEventListener('click', (e) => this.handlePaginationClick(e));
-        document.querySelector('thead').addEventListener('click', (e) => this.handleSort(e));
         this.filterInputs.forEach(input => input.addEventListener('input', (e) => this.handleFilterChange(e)));
         this.locationFiltersContainer.addEventListener('change', (e) => this.handleFilterChange(e));
         this.clearAllFiltersBtn.addEventListener('click', () => this.clearAllFilters());
@@ -413,19 +412,6 @@ export const inventoryApp = {
             this.currentPage = parseInt(pageBtn.dataset.page, 10);
             this.render();
         }
-    },
-
-    handleSort(e) {
-        const key = e.target.closest('th')?.dataset.sort;
-        if (!key) return;
-        if (this.sortConfig.key === key) {
-            this.sortConfig.direction = this.sortConfig.direction === 'asc' ? 'desc' : 'asc';
-        } else {
-            this.sortConfig.key = key;
-            this.sortConfig.direction = 'asc';
-        }
-        this.currentPage = 1;
-        this.render();
     },
 
     handleFilterChange(e) {
