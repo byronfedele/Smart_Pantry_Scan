@@ -15,6 +15,16 @@ describe('Smart Pantry Scan', () => {
         global.document = dom.window.document;
         global.window = dom.window;
 
+        // Reset inventoryApp state to prevent leakage between tests
+        inventoryApp.selectedItems = [];
+        inventoryApp.selectedLocationFilters = [];
+        inventoryApp.showSelectedItems = false;
+        inventoryApp.showSpoiled = false;
+        inventoryApp.showExpiringSoon = false;
+        inventoryApp.expiringDays = 3;
+        inventoryApp.sortConfig = { key: 'spoilage', direction: 'asc' };
+        inventoryApp.currentPage = 1;
+
         const localStorageMock = (function() {
             let store = {};
             return {
