@@ -217,8 +217,16 @@ export const inventoryApp = {
             this.inventory = JSON.parse(stored);
         } else {
             this.inventory = [
-                { id: 1, name: 'Milk', quantity: 1, unit: 'Liter', isDiscrete: false, remainingRatio: 0.75, location: 'Refrigerator', dateAdded: '2025-09-28T10:00:00Z', perishableDate: '2025-10-26T10:00:00Z', imageSmallUrl: '', url: '' },
-                { id: 2, name: 'Bananas', quantity: 6, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Counter', dateAdded: '2025-09-29T11:30:00Z', perishableDate: '2025-10-24T11:30:00Z', imageSmallUrl: '', url: '' },
+                { id: 101, name: 'Whole Milk', quantity: 1, unit: 'Gallon', isDiscrete: false, remainingRatio: 0.45, location: 'Refrigerator', dateAdded: '2025-12-24T10:00:00Z', perishableDate: '2026-01-07T10:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 102, name: 'Organic Bananas', quantity: 4, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Counter', dateAdded: '2025-12-28T11:30:00Z', perishableDate: '2026-01-02T11:30:00Z', imageSmallUrl: '', url: '' },
+                { id: 103, name: 'Large Grade A Eggs', quantity: 8, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Refrigerator', dateAdded: '2025-12-15T09:00:00Z', perishableDate: '2026-01-20T09:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 104, name: 'Sharp Cheddar Cheese', quantity: 1, unit: 'Block', isDiscrete: false, remainingRatio: 0.2, location: 'Refrigerator', dateAdded: '2025-11-15T14:00:00Z', perishableDate: '2025-12-28T14:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 105, name: 'Sourdough Bread', quantity: 1, unit: 'Loaf', isDiscrete: false, remainingRatio: 0.6, location: 'Pantry', dateAdded: '2025-12-27T16:00:00Z', perishableDate: '2026-01-03T16:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 106, name: 'Strawberry Yogurt', quantity: 2, unit: 'cups', isDiscrete: true, remainingRatio: 1, location: 'Refrigerator', dateAdded: '2025-12-10T08:00:00Z', perishableDate: '2025-12-31T08:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 107, name: 'Chicken Breast', quantity: 2, unit: 'lbs', isDiscrete: false, remainingRatio: 1, location: 'Freezer', dateAdded: '2025-12-01T12:00:00Z', perishableDate: '2026-06-01T12:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 108, name: 'Fresh Spinach', quantity: 1, unit: 'Bag', isDiscrete: false, remainingRatio: 0.8, location: 'Refrigerator', dateAdded: '2025-12-29T10:00:00Z', perishableDate: '2026-01-04T10:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 109, name: 'Canned Black Beans', quantity: 3, unit: 'cans', isDiscrete: true, remainingRatio: 1, location: 'Pantry', dateAdded: '2025-10-10T15:00:00Z', perishableDate: '2027-10-10T15:00:00Z', imageSmallUrl: '', url: '' },
+                { id: 110, name: 'Avocados', quantity: 3, unit: 'units', isDiscrete: true, remainingRatio: 1, location: 'Counter', dateAdded: '2025-12-30T13:00:00Z', perishableDate: '2026-01-05T13:00:00Z', imageSmallUrl: '', url: '' }
             ];
         }
     },
